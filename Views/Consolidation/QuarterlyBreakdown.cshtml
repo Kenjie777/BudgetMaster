@@ -1,0 +1,239 @@
+@model List<BudgetMasterFinal.Controllers.QuarterlyConsolidation>
+@{
+    ViewData["Title"] = "Quarterly Breakdown";
+    ViewData["PageTitle"] = "Quarterly Breakdown";
+    Layout = "_DashboardLayout";
+    int year = ViewBag.Year ?? DateTime.Now.Year;
+}
+
+<div class="dash-container">
+    <div class="page-actions" style="margin-bottom: 2rem;">
+        <a href="/Consolidation/Index?year=@year" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Consolidation
+        </a>
+        <form method="get" style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-weight: 500;">Fiscal Year:</label>
+            <select name="year" class="form-input-sm" onchange="this.form.submit()">
+                @for (int y = DateTime.Now.Year + 1; y >= DateTime.Now.Year - 3; y--)
+                {
+                    <option value="@y" selected="@(y == year)">@y</option>
+                }
+            </select>
+        </form>
+    </div>
+
+    <!-- Quarterly Summary Cards -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+        @foreach (var quarter in Model)
+        {
+            var netIncome = quarter.NetIncome;
+            <div class="kpi-card-neutral">
+                <div class="kpi-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white;">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-label">@quarter.Quarter @year</div>
+                    <div class="kpi-value">₱@quarter.Allocated.ToString("N0")</div>
+                    <div class="kpi-sub" style="color: @(netIncome >= 0 ? "var(--success)" : "var(--danger)");">
+                        Net: @(netIncome >= 0 ? "+" : "")₱@Math.Abs(netIncome).ToString("N0")
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Quarterly Chart -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-chart-line"></i> Quarterly Trend Analysis</div>
+        </div>
+        <div class="card-body">
+            <canvas id="quarterlyChart" style="max-height: 350px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Detailed Quarterly Table -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-table"></i> Quarterly Financial Breakdown — FY @year</div>
+        </div>
+        <div class="card-body">
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th>Quarter</th>
+                        <th>Allocated</th>
+                        <th>Used</th>
+                        <th>Actual Spend</th>
+                        <th>Variance</th>
+                        <th>Revenue</th>
+                        <th>Expenses</th>
+                        <th>Net Income</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var q in Model)
+                    {
+                        <tr>
+                            <td><strong>@q.Quarter @year</strong></td>
+                            <td>₱@q.Allocated.ToString("N0")</td>
+                            <td class="text-purple">₱@q.Used.ToString("N0")</td>
+                            <td class="text-orange">₱@q.ActualSpend.ToString("N0")</td>
+                            <td class="@(q.Variance >= 0 ? "text-green" : "text-red") fw-bold">
+                                @(q.Variance >= 0 ? "+" : "")₱@q.Variance.ToString("N0")
+                            </td>
+                            <td class="text-green fw-bold">₱@q.Revenue.ToString("N0")</td>
+                            <td class="text-red fw-bold">₱@q.Expenses.ToString("N0")</td>
+                            <td class="@(q.NetIncome >= 0 ? "text-green" : "text-red") fw-bold">
+                                @(q.NetIncome >= 0 ? "+" : "")₱@q.NetIncome.ToString("N0")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot style="background: var(--bg-secondary); font-weight: 600;">
+                    <tr>
+                        <td>TOTAL</td>
+                        <td>₱@Model.Sum(q => q.Allocated).ToString("N0")</td>
+                        <td class="text-purple">₱@Model.Sum(q => q.Used).ToString("N0")</td>
+                        <td class="text-orange">₱@Model.Sum(q => q.ActualSpend).ToString("N0")</td>
+                        <td class="@(Model.Sum(q => q.Variance) >= 0 ? "text-green" : "text-red") fw-bold">
+                            @(Model.Sum(q => q.Variance) >= 0 ? "+" : "")₱@Model.Sum(q => q.Variance).ToString("N0")
+                        </td>
+                        <td class="text-green fw-bold">₱@Model.Sum(q => q.Revenue).ToString("N0")</td>
+                        <td class="text-red fw-bold">₱@Model.Sum(q => q.Expenses).ToString("N0")</td>
+                        <td class="@(Model.Sum(q => q.NetIncome) >= 0 ? "text-green" : "text-red") fw-bold">
+                            @(Model.Sum(q => q.NetIncome) >= 0 ? "+" : "")₱@Model.Sum(q => q.NetIncome).ToString("N0")
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const quarters = @Html.Raw(Json.Serialize(Model.Select(q => q.Quarter)));
+    const allocated = @Html.Raw(Json.Serialize(Model.Select(q => q.Allocated)));
+    const used = @Html.Raw(Json.Serialize(Model.Select(q => q.Used)));
+    const actualSpend = @Html.Raw(Json.Serialize(Model.Select(q => q.ActualSpend)));
+    const revenue = @Html.Raw(Json.Serialize(Model.Select(q => q.Revenue)));
+    const expenses = @Html.Raw(Json.Serialize(Model.Select(q => q.Expenses)));
+
+    const ctx = document.getElementById('quarterlyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: quarters,
+            datasets: [
+                {
+                    label: 'Allocated',
+                    data: allocated,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Actual Spend',
+                    data: actualSpend,
+                    borderColor: 'rgb(251, 146, 60)',
+                    backgroundColor: 'rgba(251, 146, 60, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Revenue',
+                    data: revenue,
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Expenses',
+                    data: expenses,
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Quarterly Financial Trends'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+}
+
+<style>
+    .text-purple { color: #9333ea; font-weight: 600; }
+    .text-orange { color: var(--warning); font-weight: 600; }
+    .kpi-card-neutral {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .kpi-card-neutral:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .kpi-card-neutral .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .kpi-card-neutral .kpi-info {
+        flex: 1;
+    }
+    
+    .kpi-card-neutral .kpi-label {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+    
+    .kpi-card-neutral .kpi-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .kpi-card-neutral .kpi-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+</style>

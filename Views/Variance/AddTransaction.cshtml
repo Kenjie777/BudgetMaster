@@ -1,0 +1,129 @@
+@model BudgetMasterFinal.Models.ActualTransaction
+@{
+    ViewData["Title"] = "Record Expense";
+    ViewData["PageTitle"] = "Expense Tracking";
+    Layout = "_DashboardLayout";
+    var departments = ViewBag.Departments as List<BudgetMasterFinal.Models.Department> ?? new();
+    var budgets = ViewBag.Budgets as List<BudgetMasterFinal.Models.Budget> ?? new();
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-receipt"></i>
+            <h2>Record Actual Spending / Expense</h2>
+            <p>Track real operational expenses against approved budgets for variance analysis. This is not a full accounting ledger.</p>
+        </div>
+        
+        <div class="alert alert-info" style="margin-bottom: 1.5rem; padding: 1rem; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">
+            <i class="fa-solid fa-info-circle" style="color: #2196f3;"></i>
+            <strong>Expense Tracking Purpose:</strong> Record actual operational spending to compare against budgeted amounts. 
+            This updates the budget's Actual Spend and recalculates variance for financial oversight.
+        </div>
+
+        <form asp-action="AddTransaction" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            <div class="erp-form-grid">
+                <div class="form-group span-2">
+                    <label class="form-label">Expense Description <span class="required">*</span></label>
+                    <input asp-for="Description" class="form-input" placeholder="e.g., Office supplies purchase, Equipment maintenance" required />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Amount (@currency) <span class="required">*</span></label>
+                    <input asp-for="Amount" type="number" class="form-input" step="0.01" min="0" placeholder="0.00" required />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Transaction Date <span class="required">*</span></label>
+                    <input asp-for="TransactionDate" type="date" class="form-input" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Transaction Type <span class="required">*</span></label>
+                    <select asp-for="TransactionType" class="form-input form-select" required>
+                        <option value="Expense" selected>Expense (Spending)</option>
+                        <option value="Revenue">Revenue (Income)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Category <span class="required">*</span></label>
+                    <select asp-for="Category" class="form-input form-select" required>
+                        <option value="Operational" selected>Operational</option>
+                        <option value="Capital">Capital</option>
+                        <option value="Administrative">Administrative</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Related Budget</label>
+                    <select asp-for="BudgetId" class="form-input form-select">
+                        <option value="">-- Select Budget (Optional) --</option>
+                        @foreach (var budget in budgets)
+                        {
+                            <option value="@budget.Id">@budget.Title (FY@budget.FiscalYear) - @currency@budget.AllocatedAmount.ToString("N0")</option>
+                        }
+                    </select>
+                    <small class="form-hint">Link to specific budget for automatic ActualSpend update</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <select asp-for="DepartmentId" class="form-input form-select">
+                        <option value="">-- Select Department (Optional) --</option>
+                        @foreach (var dept in departments)
+                        {
+                            <option value="@dept.Id">@dept.Name</option>
+                        }
+                    </select>
+                    <small class="form-hint">If no budget selected, system will find active department budget</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Reference Number</label>
+                    <input asp-for="ReferenceNumber" class="form-input" placeholder="Invoice/Receipt number (optional)" />
+                </div>
+                
+                <div class="form-group span-2">
+                    <label class="form-label">Notes</label>
+                    <textarea asp-for="Notes" class="form-input form-textarea" rows="3" placeholder="Additional details about this expense..."></textarea>
+                </div>
+            </div>
+
+            <div class="info-box" style="margin: 1.5rem 0; padding: 1rem; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                <div style="display: flex; align-items: start; gap: 0.75rem;">
+                    <i class="fa-solid fa-lightbulb" style="color: #ffc107; font-size: 1.25rem; margin-top: 0.125rem;"></i>
+                    <div style="font-size: 0.875rem; color: #856404;">
+                        <strong>What happens when you record this expense:</strong>
+                        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem;">
+                            <li>Transaction is saved for expense tracking</li>
+                            <li>Related budget's <strong>Actual Spend</strong> is updated</li>
+                            <li>Variance is automatically recalculated (Allocated - Actual Spend)</li>
+                            <li>Finance Manager is notified if budget is exceeded</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="/Variance/Transactions" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-save"></i> Record Expense
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-hint {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+</style>

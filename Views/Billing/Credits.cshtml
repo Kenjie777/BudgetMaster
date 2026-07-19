@@ -1,0 +1,141 @@
+@model IEnumerable<BudgetMasterFinal.Models.BillingCredit>
+@{
+    ViewData["Title"] = "Credit Management";
+    ViewData["PageTitle"] = "Credit Management";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-coins"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Credits Issued</div>
+                <div class="kpi-value">@Model.Count()</div>
+                <div class="kpi-sub">All time</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Active Credits</div>
+                <div class="kpi-value">@Model.Count(c => c.Status == "Active")</div>
+                <div class="kpi-sub">Available for use</div>
+            </div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Credit Value</div>
+                <div class="kpi-value">₱@Model.Sum(c => c.Amount).ToString("N0")</div>
+                <div class="kpi-sub">Issued credits</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-chart-pie"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Used Credits</div>
+                <div class="kpi-value">₱@Model.Sum(c => c.UsedAmount).ToString("N0")</div>
+                <div class="kpi-sub">Applied to accounts</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-coins"></i> Credit Management</div>
+            <a href="@Url.Action("IssueCredit")" class="btn-primary">
+                <i class="fa-solid fa-plus"></i> Issue Credit
+            </a>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Credit ID</th>
+                            <th>Tenant</th>
+                            <th>Amount</th>
+                            <th>Used</th>
+                            <th>Remaining</th>
+                            <th>Status</th>
+                            <th>Issued Date</th>
+                            <th>Reason</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var credit in Model.OrderByDescending(c => c.CreatedAt))
+                        {
+                            var remaining = credit.Amount - credit.UsedAmount;
+                            <tr>
+                                <td>
+                                    <div class="cell-main">#@credit.Id.ToString("D6")</div>
+                                </td>
+                                <td>
+                                    <div class="cell-main">@credit.Tenant?.CompanyName</div>
+                                </td>
+                                <td>
+                                    <div class="cell-main">₱@credit.Amount.ToString("N2")</div>
+                                </td>
+                                <td>
+                                    <div class="cell-main">₱@credit.UsedAmount.ToString("N2")</div>
+                                </td>
+                                <td>
+                                    <div class="cell-main">₱@remaining.ToString("N2")</div>
+                                    @if (remaining > 0)
+                                    {
+                                        var usagePercent = (credit.UsedAmount / credit.Amount * 100);
+                                        <div class="progress-wrap">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill @(usagePercent > 90 ? "danger" : usagePercent > 70 ? "warning" : "success")" style="width: @usagePercent.ToString("F1")%"></div>
+                                            </div>
+                                            <span class="progress-pct">@usagePercent.ToString("F0")%</span>
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="status-badge @(credit.Status == "Active" ? "status-active" : credit.Status == "Used" ? "status-closed" : "status-pending")">
+                                        @credit.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="cell-main">@credit.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                    <div class="cell-sub">@credit.CreatedAt.ToString("HH:mm")</div>
+                                </td>
+                                <td>
+                                    <div class="cell-main">@(credit.Reason ?? "—")</div>
+                                </td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="btn-icon" title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        @if (credit.Status == "Active" && remaining > 0)
+                                        {
+                                            <button class="btn-icon warning" title="Expire Credit">
+                                                <i class="fa-solid fa-ban"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-coins"></i>
+                    <h3>No Credits Issued</h3>
+                    <p>No billing credits have been issued yet.</p>
+                    <a href="@Url.Action("IssueCredit")" class="btn-primary">
+                        <i class="fa-solid fa-plus"></i> Issue First Credit
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

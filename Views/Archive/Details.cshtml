@@ -1,0 +1,267 @@
+@model BudgetMasterFinal.Models.ArchivedItem
+@{
+    ViewData["Title"] = "Archive Details";
+    ViewData["PageTitle"] = "Archive Details";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <!-- Header Card -->
+    <div class="dash-card" style="margin-bottom: 20px;">
+        <div class="card-body" style="display: flex; align-items: center; gap: 20px;">
+            <div style="width: 64px; height: 64px; background: #1e3a5f; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 32px; color: white;">
+                @switch (Model.EntityType)
+                {
+                    case "ApplicationUser":
+                        <i class="fa-solid fa-user"></i>
+                        break;
+                    case "Department":
+                        <i class="fa-solid fa-building"></i>
+                        break;
+                    case "Budget":
+                        <i class="fa-solid fa-sack-dollar"></i>
+                        break;
+                    case "BudgetRequest":
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        break;
+                    case "Forecast":
+                        <i class="fa-solid fa-chart-line"></i>
+                        break;
+                    case "ScenarioPlan":
+                        <i class="fa-solid fa-diagram-project"></i>
+                        break;
+                    case "Tenant":
+                        <i class="fa-solid fa-building-user"></i>
+                        break;
+                    default:
+                        <i class="fa-solid fa-box"></i>
+                        break;
+                }
+            </div>
+            <div>
+                <h2 style="margin: 0 0 8px 0; font-size: 24px; color: #1e293b;">@Model.EntityName</h2>
+                <span class="status-badge status-active">@Model.EntityType</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Information -->
+    <div class="dash-card" style="margin-bottom: 20px;">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-info-circle"></i> Archive Information</div>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Entity ID</label>
+                    <div style="font-size: 16px; color: #1e293b; font-weight: 600;">@Model.EntityId</div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Entity Type</label>
+                    <div style="font-size: 16px; color: #1e293b; font-weight: 600;">@Model.EntityType</div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Entity Name</label>
+                    <div style="font-size: 16px; color: #1e293b; font-weight: 600;">@Model.EntityName</div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Archived Date</label>
+                    <div style="font-size: 16px; color: #1e293b; font-weight: 600;">@Model.ArchivedAt.ToString("MMMM dd, yyyy 'at' hh:mm tt")</div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Archived By</label>
+                    <div style="font-size: 16px; color: #1e293b; font-weight: 600;">@Model.ArchivedBy</div>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Can Restore</label>
+                    <div>
+                        @if (Model.CanRestore)
+                        {
+                            <span class="status-badge status-active"><i class="fa-solid fa-check"></i> Yes</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge status-closed"><i class="fa-solid fa-times"></i> No</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Reason -->
+    @if (!string.IsNullOrEmpty(Model.ArchiveReason))
+    {
+        <div class="dash-card" style="margin-bottom: 20px;">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-comment"></i> Archive Reason</div>
+            </div>
+            <div class="card-body">
+                <div style="background: #f8fafc; border-left: 4px solid #1e3a5f; padding: 16px; border-radius: 8px; color: #475569; line-height: 1.6;">
+                    @Model.ArchiveReason
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Restoration Information -->
+    @if (Model.RestoredAt.HasValue)
+    {
+        <div class="dash-card" style="margin-bottom: 20px;">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-rotate-left"></i> Restoration Information</div>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Restored Date</label>
+                        <div style="font-size: 16px; color: #1e293b; font-weight: 600;">@Model.RestoredAt.Value.ToString("MMMM dd, yyyy 'at' hh:mm tt")</div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Restored By</label>
+                        <div style="font-size: 16px; color: #1e293b; font-weight: 600;">@Model.RestoredBy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Original Data Snapshot -->
+    @if (!string.IsNullOrEmpty(Model.OriginalData))
+    {
+        <div class="dash-card" style="margin-bottom: 20px;">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-database"></i> Original Data Snapshot</div>
+            </div>
+            <div class="card-body">
+                <div style="background: #1e293b; border-radius: 8px; padding: 20px; overflow-x: auto;">
+                    <pre style="margin: 0; color: #e2e8f0; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6;">@Model.OriginalData</pre>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Actions -->
+    <div class="dash-card">
+        <div class="card-body">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <a href="@Url.Action("Index", "Archive")" class="btn-secondary">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Archive
+                </a>
+                @if (Model.CanRestore && !Model.RestoredAt.HasValue)
+                {
+                    <button onclick="restoreItem('@Model.EntityType', '@Model.EntityId', '@Model.EntityName')" class="btn-primary" style="background: #10b981;">
+                        <i class="fa-solid fa-rotate-left"></i> Restore Item
+                    </button>
+                }
+                @if (User.IsInRole("SuperAdmin") && !Model.RestoredAt.HasValue)
+                {
+                    <button onclick="permanentDelete('@Model.EntityType', '@Model.EntityId', '@Model.EntityName')" class="btn-primary" style="background: #ef4444;">
+                        <i class="fa-solid fa-trash"></i> Delete Forever
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function restoreItem(entityType, entityId, entityName) {
+    console.log('Restore clicked:', entityType, entityId, entityName);
+    
+    if (!confirm('Are you sure you want to restore this ' + entityType + '?\n\n"' + entityName + '"\n\nThis will return it to active status.')) {
+        return;
+    }
+    
+    var token = document.querySelector('input[name="__RequestVerificationToken"]');
+    if (!token) {
+        alert('Security token not found. Please refresh the page.');
+        return;
+    }
+    
+    var formData = 'entityType=' + encodeURIComponent(entityType) + 
+                   '&entityId=' + encodeURIComponent(entityId) + 
+                   '&__RequestVerificationToken=' + encodeURIComponent(token.value);
+    
+    console.log('Sending restore request...');
+    
+    fetch('@Url.Action("Restore", "Archive")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+    })
+    .then(function(response) {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(function(data) {
+        console.log('Response data:', data);
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '@Url.Action("Index", "Archive")';
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        alert('An error occurred while restoring the item. Check console for details.');
+    });
+}
+
+function permanentDelete(entityType, entityId, entityName) {
+    console.log('Delete clicked:', entityType, entityId, entityName);
+    
+    if (!confirm('⚠️ PERMANENT DELETE WARNING ⚠️\n\nAre you ABSOLUTELY SURE you want to PERMANENTLY DELETE this ' + entityType + '?\n\n"' + entityName + '"\n\nThis action CANNOT be undone!')) {
+        return;
+    }
+    
+    var confirmation = prompt('Type "DELETE" to confirm permanent deletion:');
+    if (confirmation !== 'DELETE') {
+        alert('Deletion cancelled. You must type "DELETE" exactly to confirm.');
+        return;
+    }
+    
+    var token = document.querySelector('input[name="__RequestVerificationToken"]');
+    if (!token) {
+        alert('Security token not found. Please refresh the page.');
+        return;
+    }
+    
+    var formData = 'entityType=' + encodeURIComponent(entityType) + 
+                   '&entityId=' + encodeURIComponent(entityId) + 
+                   '&__RequestVerificationToken=' + encodeURIComponent(token.value);
+    
+    console.log('Sending delete request...');
+    
+    fetch('@Url.Action("PermanentDelete", "Archive")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+    })
+    .then(function(response) {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(function(data) {
+        console.log('Response data:', data);
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '@Url.Action("Index", "Archive")';
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the item. Check console for details.');
+    });
+}
+</script>
+@Html.AntiForgeryToken()
+}

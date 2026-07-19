@@ -1,0 +1,223 @@
+@model BudgetMasterFinal.Models.ViewModels.FiscalYearSettingsViewModel
+@{
+    ViewData["Title"] = "Fiscal Year Settings";
+    ViewData["PageTitle"] = "Fiscal Year Settings";
+}
+
+<div class="dash-container">
+    <div class="dash-row">
+        <!-- Current Fiscal Year Card -->
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-calendar-alt"></i>
+                    Current Fiscal Year
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border-radius: 0.75rem; font-size: 1.125rem; font-weight: 600; margin-bottom: 1.5rem;">
+                        <i class="fa-solid fa-calendar-alt"></i>
+                        <span>@Model.CurrentFiscalYear</span>
+                    </div>
+                    <table class="dash-table">
+                        <tr>
+                            <td style="font-weight: 600; color: #64748b;">Start Month</td>
+                            <td>@Model.FiscalYearStart</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: 600; color: #64748b;">Budget Cycle</td>
+                            <td>@Model.BudgetCycle</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Form -->
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-cog"></i>
+                    Fiscal Year Configuration
+                </div>
+            </div>
+            <div class="card-body">
+                <form asp-action="UpdateFiscalYear" method="post">
+                    @Html.AntiForgeryToken()
+                    
+                    <div class="erp-form-grid">
+                        <div class="form-group">
+                            <label asp-for="FiscalYearStart">Fiscal Year Start Month</label>
+                            <select asp-for="FiscalYearStart" class="form-input form-select">
+                                <option value="January">January</option>
+                                <option value="February">February</option>
+                                <option value="March">March</option>
+                                <option value="April">April</option>
+                                <option value="May">May</option>
+                                <option value="June">June</option>
+                                <option value="July">July</option>
+                                <option value="August">August</option>
+                                <option value="September">September</option>
+                                <option value="October">October</option>
+                                <option value="November">November</option>
+                                <option value="December">December</option>
+                            </select>
+                            <small style="color: #64748b; font-size: 0.75rem;">Select the month when your fiscal year begins</small>
+                            <span asp-validation-for="FiscalYearStart" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="BudgetCycle">Budget Planning Cycle</label>
+                            <select asp-for="BudgetCycle" class="form-input form-select">
+                                <option value="Monthly">Monthly</option>
+                                <option value="Quarterly">Quarterly</option>
+                                <option value="Annual">Annual</option>
+                            </select>
+                            <small style="color: #64748b; font-size: 0.75rem;">How often do you plan and review budgets?</small>
+                            <span asp-validation-for="BudgetCycle" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group span-2">
+                            <label asp-for="ApprovalWorkflow">Approval Workflow</label>
+                            <select asp-for="ApprovalWorkflow" class="form-input form-select">
+                                <option value="Standard">Standard (Single Approval)</option>
+                                <option value="Advanced">Advanced (Multi-level Approval)</option>
+                                <option value="Custom">Custom Workflow</option>
+                            </select>
+                            <small style="color: #64748b; font-size: 0.75rem;">Choose the budget approval process complexity</small>
+                            <span asp-validation-for="ApprovalWorkflow" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-save"></i> Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guidelines Card -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-info-circle"></i>
+                Configuration Guidelines
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="guidelines-grid">
+                <div class="guideline-item">
+                    <div class="guideline-icon info">
+                        <i class="fa-solid fa-info-circle"></i>
+                    </div>
+                    <div class="guideline-content">
+                        <h4>Fiscal Year Start</h4>
+                        <p>Changing the fiscal year start month will affect all future budget periods. Existing budgets will remain unchanged.</p>
+                    </div>
+                </div>
+                
+                <div class="guideline-item">
+                    <div class="guideline-icon calendar">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div class="guideline-content">
+                        <h4>Budget Cycle</h4>
+                        <p>The budget cycle determines how frequently budget reviews and updates occur. Monthly cycles provide more granular control.</p>
+                    </div>
+                </div>
+                
+                <div class="guideline-item">
+                    <div class="guideline-icon workflow">
+                        <i class="fa-solid fa-sitemap"></i>
+                    </div>
+                    <div class="guideline-content">
+                        <h4>Approval Workflow</h4>
+                        <p>Standard workflow requires single approval, Advanced enables multi-level approvals, and Custom allows complex approval chains.</p>
+                    </div>
+                </div>
+                
+                <div class="guideline-item warning">
+                    <div class="guideline-icon warning">
+                        <i class="fa-solid fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="guideline-content">
+                        <h4>Important Notice</h4>
+                        <p>Changes to these settings may affect existing budget processes. Please coordinate with your finance team before making changes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.guidelines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.guideline-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+}
+
+.guideline-item.warning {
+    background: #fef3cd;
+    border-color: #fbbf24;
+}
+
+.guideline-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    flex-shrink: 0;
+    color: white;
+}
+
+.guideline-icon.info {
+    background: #6366f1;
+}
+
+.guideline-icon.calendar {
+    background: #10b981;
+}
+
+.guideline-icon.workflow {
+    background: #8b5cf6;
+}
+
+.guideline-icon.warning {
+    background: #f59e0b;
+}
+
+.guideline-content h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 0.25rem 0;
+}
+
+.guideline-content p {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.4;
+}
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

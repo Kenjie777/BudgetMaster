@@ -1,0 +1,307 @@
+@model BudgetMasterFinal.Models.RevenueMetrics
+@{
+    ViewData["Title"] = "Billing & Revenue Dashboard";
+    ViewData["PageTitle"] = "Billing & Revenue Dashboard";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Monthly Recurring Revenue</div>
+                <div class="kpi-value">₱@Model.MonthlyRecurringRevenue.ToString("N0")</div>
+                <div class="kpi-sub">+12.5% from last month</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-calendar-days"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Annual Recurring Revenue</div>
+                <div class="kpi-value">₱@Model.AnnualRecurringRevenue.ToString("N0")</div>
+                <div class="kpi-sub">+18.3% YoY growth</div>
+            </div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-user-dollar"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Average Revenue Per User</div>
+                <div class="kpi-value">₱@Model.AverageRevenuePerUser.ToString("N0")</div>
+                <div class="kpi-sub">+5.2% from last month</div>
+            </div>
+        </div>
+        <div class="kpi-card @(Model.ChurnRate <= 5 ? "green" : "red")">
+            <div class="kpi-icon"><i class="fa-solid fa-chart-line-down"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Churn Rate</div>
+                <div class="kpi-value">@Model.ChurnRate.ToString("F1")%</div>
+                <div class="kpi-sub">@(Model.ChurnRate <= 5 ? "Healthy rate" : "Needs attention")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-chart-line"></i> Revenue Trends</div>
+                <a href="@Url.Action("Transactions")" class="card-link">View All</a>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-chart-pie"></i> Plan Distribution</div>
+                <a href="@Url.Action("Plans")" class="card-link">Manage Plans</a>
+            </div>
+            <div class="card-body">
+                <canvas id="planChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-layer-group"></i> Revenue by Plan</div>
+            <a href="@Url.Action("Plans")" class="card-link">View All</a>
+        </div>
+        <div class="card-body">
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th>Plan Name</th>
+                        <th>Subscriptions</th>
+                        <th>Monthly Revenue</th>
+                        <th>Percentage</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var plan in Model.PlanDistribution)
+                    {
+                        var revenue = Model.RevenueByPlan.ContainsKey(plan.Key) ? Model.RevenueByPlan[plan.Key] : 0;
+                        var percentage = Model.MonthlyRecurringRevenue > 0 ? (revenue / Model.MonthlyRecurringRevenue * 100) : 0;
+                        <tr>
+                            <td><strong>@plan.Key</strong></td>
+                            <td><span class="status-badge status-active">@plan.Value</span></td>
+                            <td>₱@revenue.ToString("N0")</td>
+                            <td>
+                                <div class="progress-wrap">
+                                    <div class="progress-bar">
+                                        <div class="progress-fill @(percentage > 90 ? "danger" : percentage > 70 ? "warning" : "success")" style="width: @percentage.ToString("F1")%"></div>
+                                    </div>
+                                    <span class="progress-pct">@percentage.ToString("F1")%</span>
+                                </div>
+                            </td>
+                            <td><a href="@Url.Action("Subscriptions", new { planId = plan.Key })" class="tbl-link">View</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-users"></i> Subscription Metrics</div>
+            </div>
+            <div class="card-body">
+                <div class="kpi-grid">
+                    <div class="kpi-card blue">
+                        <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+                        <div class="kpi-info">
+                            <div class="kpi-label">Active Subscriptions</div>
+                            <div class="kpi-value">@Model.ActiveSubscriptions</div>
+                            <div class="kpi-sub">Paying customers</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card green">
+                        <div class="kpi-icon"><i class="fa-solid fa-plus-circle"></i></div>
+                        <div class="kpi-info">
+                            <div class="kpi-label">New This Month</div>
+                            <div class="kpi-value">@Model.NewSubscriptions</div>
+                            <div class="kpi-sub">New signups</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card orange">
+                        <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+                        <div class="kpi-info">
+                            <div class="kpi-label">Trial Subscriptions</div>
+                            <div class="kpi-value">@Model.TrialSubscriptions</div>
+                            <div class="kpi-sub">Active trials</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card red">
+                        <div class="kpi-icon"><i class="fa-solid fa-minus-circle"></i></div>
+                        <div class="kpi-info">
+                            <div class="kpi-label">Cancelled</div>
+                            <div class="kpi-value">@Model.CancelledSubscriptions</div>
+                            <div class="kpi-sub">This month</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-bolt"></i> Quick Actions</div>
+            </div>
+            <div class="card-body">
+                <div class="action-list">
+                    <a href="@Url.Action("Subscriptions")" class="action-item">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <span>Manage Subscriptions</span>
+                    </a>
+                    <a href="@Url.Action("IssueCredit")" class="action-item">
+                        <i class="fa-solid fa-coins"></i>
+                        <span>Issue Credit</span>
+                    </a>
+                    <a href="@Url.Action("CreateDiscount")" class="action-item">
+                        <i class="fa-solid fa-percent"></i>
+                        <span>Create Discount</span>
+                    </a>
+                    <a href="@Url.Action("Transactions")" class="action-item">
+                        <i class="fa-solid fa-receipt"></i>
+                        <span>View Transactions</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Revenue Trends Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueChart = new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.MonthlyTrends.Select(t => t.Month))),
+            datasets: [{
+                label: 'Revenue',
+                data: @Html.Raw(Json.Serialize(Model.MonthlyTrends.Select(t => t.Revenue))),
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#f1f5f9'
+                    },
+                    ticks: {
+                        color: '#64748b',
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#64748b',
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Plan Distribution Chart
+    const planCtx = document.getElementById('planChart').getContext('2d');
+    const planChart = new Chart(planCtx, {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.PlanDistribution.Keys)),
+            datasets: [{
+                data: @Html.Raw(Json.Serialize(Model.PlanDistribution.Values)),
+                backgroundColor: [
+                    '#6366f1',
+                    '#10b981',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#8b5cf6',
+                    '#06b6d4'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: {
+                            size: 12
+                        },
+                        color: '#64748b'
+                    }
+                }
+            }
+        }
+    });
+</script>
+}
+
+<style>
+.action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+}
+
+.action-item:hover {
+    background: #f8fafc;
+    color: #6366f1;
+    border-color: #6366f1;
+}
+
+.action-item i {
+    width: 16px;
+    text-align: center;
+}
+
+#revenueChart, #planChart {
+    height: 200px !important;
+}
+</style>

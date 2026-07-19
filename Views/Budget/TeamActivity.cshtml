@@ -1,0 +1,183 @@
+@{
+    ViewData["Title"] = "Team Activity";
+    var department = ViewBag.Department as BudgetMasterFinal.Models.Department;
+    var teamMembers = ViewBag.TeamMembers as List<BudgetMasterFinal.Models.ApplicationUser>;
+    var teamRequests = ViewBag.TeamRequests as List<BudgetMasterFinal.Models.BudgetRequest>;
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">TEAM</div>
+                <div class="kpi-value">@(teamMembers?.Count ?? 0)</div>
+                <div class="kpi-sub">members</div>
+            </div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">REQUESTS</div>
+                <div class="kpi-value">@(teamRequests?.Count ?? 0)</div>
+                <div class="kpi-sub">total</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">PENDING</div>
+                <div class="kpi-value">@(teamRequests?.Count(r => r.Status == "Pending") ?? 0)</div>
+                <div class="kpi-sub">review</div>
+            </div>
+        </div>
+        <div class="kpi-card teal">
+            <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">VALUE</div>
+                <div class="kpi-value">@(teamRequests?.Sum(r => r.RequestedAmount).ToString("C0") ?? "$0")</div>
+                <div class="kpi-sub">requested</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-users"></i> Team</div>
+                <a href="/UserManagement" class="card-link">Manage</a>
+            </div>
+            <div class="card-body">
+                @if (teamMembers != null && teamMembers.Any())
+                {
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Role</th>
+                                <th>Requests</th>
+                                <th>Total Value</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var member in teamMembers)
+                            {
+                                var memberRequests = teamRequests?.Where(r => r.RequestedByUserId == member.Id).ToList() ?? new List<BudgetMasterFinal.Models.BudgetRequest>();
+                                
+                                <tr>
+                                    <td>
+                                        <div class="user-cell">
+                                            <div class="user-avatar-sm">
+                                                @member.FirstName?.Substring(0, 1)@member.LastName?.Substring(0, 1)
+                                            </div>
+                                            <div>
+                                                <div class="cell-main">@member.FullName</div>
+                                                <div class="cell-sub">@member.Email</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="role-badge role-@(member.Role?.ToLower())">@member.Role</span></td>
+                                    <td><strong>@memberRequests.Count</strong></td>
+                                    <td><strong>@memberRequests.Sum(r => r.RequestedAmount).ToString("C0")</strong></td>
+                                    <td>
+                                        <div class="action-btns">
+                                            <a href="/Budget/UserRequests/@member.Id" class="btn-icon" title="View Requests">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fa-solid fa-users"></i>
+                        <h3>No Team Members</h3>
+                        <p>No active members</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-clock"></i> Activity</div>
+                <a href="/Budget/DepartmentRequests" class="card-link">View All</a>
+            </div>
+            <div class="card-body">
+                @if (teamRequests != null && teamRequests.Any())
+                {
+                    <div class="request-list">
+                        @foreach (var request in teamRequests.Take(5))
+                        {
+                            <div class="request-item">
+                                <div class="req-avatar">
+                                    @request.RequestedByUser?.FirstName?.Substring(0, 1)@request.RequestedByUser?.LastName?.Substring(0, 1)
+                                </div>
+                                <div class="req-info">
+                                    <div class="req-title">@request.Title</div>
+                                    <div class="req-meta">
+                                        @request.RequestedByUser?.FullName • @request.CreatedAt.ToString("MMM dd")
+                                    </div>
+                                </div>
+                                <div class="req-amount">@request.RequestedAmount.ToString("C")</div>
+                                <div class="req-status">
+                                    <span class="status-badge status-@(request.Status.ToLower())">
+                                        @switch (request.Status)
+                                        {
+                                            case "Pending":
+                                                @:Pending Review
+                                                break;
+                                            case "OperationallyApproved":
+                                                @:Awaiting Finance
+                                                break;
+                                            case "Approved":
+                                                @:Approved
+                                                break;
+                                            case "Rejected":
+                                            case "FinanciallyRejected":
+                                                @:Rejected
+                                                break;
+                                            default:
+                                                @request.Status
+                                                break;
+                                        }
+                                    </span>
+                                </div>
+                                <div class="req-actions">
+                                    @if (request.Status == "Pending")
+                                    {
+                                        <a href="/Budget/RequestApproval" class="btn-icon" title="Review">
+                                            <i class="fa-solid fa-check"></i>
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    
+                    @if (teamRequests.Count > 5)
+                    {
+                        <div style="text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                            <a href="/Budget/DepartmentRequests" class="btn-secondary">
+                                View All Requests (@teamRequests.Count)
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <h3>No Activity</h3>
+                        <p>No requests submitted yet</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

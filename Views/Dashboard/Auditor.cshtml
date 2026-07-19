@@ -1,0 +1,151 @@
+@model BudgetMasterFinal.Models.ViewModels.AuditorDashboardViewModel
+@{
+    ViewData["Title"] = "Auditor Dashboard";
+    ViewData["PageTitle"] = "Audit & Compliance";
+    Layout = "_DashboardLayout";
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+<div class="dash-container">
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-wallet"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Budgets</div>
+                <div class="kpi-value">@Model.TotalBudgets</div>
+                <div class="kpi-sub">Under review</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-receipt"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Transactions</div>
+                <div class="kpi-value">@Model.TotalTransactions</div>
+                <div class="kpi-sub">Recorded entries</div>
+            </div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-coins"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Budgeted</div>
+                <div class="kpi-value">@currency@Model.TotalBudgeted.ToString("N0")</div>
+                <div class="kpi-sub">Planned expenditure</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Budget Used</div>
+                <div class="kpi-value">@currency@Model.TotalUsed.ToString("N0")</div>
+                <div class="kpi-sub">Allocated funds used</div>
+            </div>
+        </div>
+        <div class="kpi-card @(Model.OverallVariance >= 0 ? "teal" : "red")">
+            <div class="kpi-icon"><i class="fa-solid fa-arrows-left-right-to-line"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Overall Variance</div>
+                <div class="kpi-value">@currency@Model.OverallVariance.ToString("N0")</div>
+                <div class="kpi-sub">@(Model.OverallVariance >= 0 ? "Within budget" : "Exceeds budget")</div>
+            </div>
+        </div>
+        <div class="kpi-card @(Model.FlaggedItems > 0 ? "red" : "green")">
+            <div class="kpi-icon"><i class="fa-solid fa-flag"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Flagged Items</div>
+                <div class="kpi-value">@Model.FlaggedItems</div>
+                <div class="kpi-sub">Rejected requests</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-wallet"></i> Budget Review</div>
+                <a href="/Auditor/Budgets" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                    <i class="fa-solid fa-list"></i> View All
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.Budgets.Any())
+                {
+                    <table class="dash-table">
+                        <thead><tr><th>Budget</th><th>Year</th><th>Allocated</th><th>Spent</th><th>Variance</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var b in Model.Budgets)
+                            {
+                                var variance = b.AllocatedAmount - b.UsedAmount;
+                                <tr>
+                                    <td><strong>@b.Title</strong></td>
+                                    <td>@b.FiscalYear</td>
+                                    <td>@currency@b.AllocatedAmount.ToString("N0")</td>
+                                    <td>@currency@b.UsedAmount.ToString("N0")</td>
+                                    <td style="color:@(variance >= 0 ? "var(--success)" : "var(--danger)")">
+                                        @(variance >= 0 ? "+" : "")@currency@variance.ToString("N0")
+                                    </td>
+                                    <td><span class="status-badge status-@b.Status.ToLower()">@b.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else { <div class="empty-state"><i class="fa-solid fa-wallet"></i><p>No budgets to review.</p></div> }
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-receipt"></i> Recent Transactions</div>
+                <a href="/Auditor/Transactions" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                    <i class="fa-solid fa-list"></i> View All
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentTransactions.Any())
+                {
+                    <table class="dash-table">
+                        <thead><tr><th>Date</th><th>Description</th><th>Budget</th><th>Dept</th><th>Type</th><th>Amount</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in Model.RecentTransactions)
+                            {
+                                <tr>
+                                    <td>@t.TransactionDate.ToString("MMM dd, yyyy")</td>
+                                    <td>@t.Description</td>
+                                    <td>@(t.Budget?.Title ?? "—")</td>
+                                    <td>@(t.Department?.Name ?? "—")</td>
+                                    <td><span class="status-badge @(t.TransactionType == "Income" ? "status-approved" : "status-pending")">@t.TransactionType</span></td>
+                                    <td><strong>@currency@t.Amount.ToString("N2")</strong></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else { <div class="empty-state"><i class="fa-solid fa-receipt"></i><p>No transactions recorded yet.</p></div> }
+            </div>
+        </div>
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-scroll"></i> Audit Trail</div>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentAuditLogs.Any())
+                {
+                    @foreach (var log in Model.RecentAuditLogs)
+                    {
+                        <div class="notif-item">
+                            <div class="notif-dot"></div>
+                            <div class="notif-content">
+                                <div class="notif-title">@log.User?.FullName — <span style="color:var(--primary)">@log.Action</span> on @log.EntityType</div>
+                                <div class="notif-time">@log.Timestamp.ToString("MMM dd, HH:mm") • IP: @(log.IpAddress ?? "—")</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else { <div class="empty-state"><i class="fa-solid fa-scroll"></i><p>No audit logs available.</p></div> }
+            </div>
+        </div>
+    </div>
+</div>

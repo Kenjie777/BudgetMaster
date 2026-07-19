@@ -1,0 +1,344 @@
+@model BudgetMasterFinal.Models.Subscription
+@{
+    ViewData["Title"] = "Subscription Details";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="page-header">
+    <h1>Subscription Details</h1>
+    <p>@Model.Tenant.CompanyName subscription information</p>
+</div>
+
+<div class="content-wrapper">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Subscription Information</h3>
+                    <div class="card-actions">
+                        <a href="@Url.Action("Subscriptions")" class="btn btn-secondary">Back to Subscriptions</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Company</label>
+                            <value>@Model.Tenant.CompanyName</value>
+                        </div>
+                        <div class="info-item">
+                            <label>Plan</label>
+                            <value>@Model.SubscriptionPlan.Name</value>
+                        </div>
+                        <div class="info-item">
+                            <label>Billing Cycle</label>
+                            <value>@Model.BillingCycle</value>
+                        </div>
+                        <div class="info-item">
+                            <label>Price</label>
+                            <value>₱@Model.PriceAmount.ToString("N2")</value>
+                        </div>
+                        <div class="info-item">
+                            <label>Status</label>
+                            <value>
+                                <span class="status-badge @(Model.Status == "Active" ? "status-active" : Model.Status == "Suspended" ? "status-suspended" : "status-inactive")">
+                                    @Model.Status
+                                </span>
+                            </value>
+                        </div>
+                        <div class="info-item">
+                            <label>Start Date</label>
+                            <value>@Model.StartDate.ToString("MMM dd, yyyy")</value>
+                        </div>
+                        <div class="info-item">
+                            <label>End Date</label>
+                            <value>@Model.EndDate.ToString("MMM dd, yyyy")</value>
+                        </div>
+                        <div class="info-item">
+                            <label>Next Billing</label>
+                            <value>@Model.NextBillingDate?.ToString("MMM dd, yyyy")</value>
+                        </div>
+                        <div class="info-item">
+                            <label>Users</label>
+                            <value>@Model.CurrentUsers / @Model.SubscriptionPlan.MaxUsers</value>
+                        </div>
+                        <div class="info-item">
+                            <label>Credit Balance</label>
+                            <value>₱@((Model.CreditBalance ?? 0).ToString("N2"))</value>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.SuspensionReason))
+                    {
+                        <div class="alert alert-warning">
+                            <strong>Suspension Reason:</strong> @Model.SuspensionReason
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recent Transactions</h3>
+                </div>
+                <div class="card-body">
+                    @if (Model.BillingTransactions?.Any() == true)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Reference</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var transaction in Model.BillingTransactions.OrderByDescending(t => t.TransactionDate).Take(10))
+                                    {
+                                        <tr>
+                                            <td>@transaction.TransactionDate.ToString("MMM dd, yyyy")</td>
+                                            <td>@transaction.TransactionType</td>
+                                            <td>₱@transaction.Amount.ToString("N2")</td>
+                                            <td>
+                                                <span class="status-badge @(transaction.Status == "Completed" ? "status-active" : "status-inactive")">
+                                                    @transaction.Status
+                                                </span>
+                                            </td>
+                                            <td>@transaction.PaymentReference</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No transactions found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="action-buttons-vertical">
+                        @if (Model.Status == "Active")
+                        {
+                            <form asp-action="SuspendSubscription" method="post" style="display: inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <input type="text" name="reason" placeholder="Suspension reason" class="form-control mb-2" required />
+                                <button type="submit" class="btn btn-warning btn-block" onclick="return confirm('Are you sure you want to suspend this subscription?')">
+                                    Suspend Subscription
+                                </button>
+                            </form>
+                        }
+                        else if (Model.Status == "Suspended")
+                        {
+                            <form asp-action="RestoreSubscription" method="post" style="display: inline;">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button type="submit" class="btn btn-success btn-block">
+                                    Restore Subscription
+                                </button>
+                            </form>
+                        }
+
+                        <button type="button" class="btn btn-primary btn-block" data-toggle="modal" data-target="#changePlanModal">
+                            Change Plan
+                        </button>
+
+                        <a href="@Url.Action("IssueCredit", new { tenantId = Model.TenantId })" class="btn btn-info btn-block">
+                            Issue Credit
+                        </a>
+
+                        <button type="button" class="btn btn-secondary btn-block" data-toggle="modal" data-target="#processPaymentModal">
+                            Process Payment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Plan Features</h3>
+                </div>
+                <div class="card-body">
+                    <div class="feature-list-vertical">
+                        @if (Model.SubscriptionPlan.IncludesForecasting)
+                        {
+                            <div class="feature-item">✓ Forecasting</div>
+                        }
+                        @if (Model.SubscriptionPlan.IncludesScenarioPlanning)
+                        {
+                            <div class="feature-item">✓ Scenario Planning</div>
+                        }
+                        @if (Model.SubscriptionPlan.IncludesAdvancedReports)
+                        {
+                            <div class="feature-item">✓ Advanced Reports</div>
+                        }
+                        @if (Model.SubscriptionPlan.IncludesApiAccess)
+                        {
+                            <div class="feature-item">✓ API Access</div>
+                        }
+                        @if (Model.SubscriptionPlan.IncludesCustomBranding)
+                        {
+                            <div class="feature-item">✓ Custom Branding</div>
+                        }
+                        @if (Model.SubscriptionPlan.IncludesPrioritySupport)
+                        {
+                            <div class="feature-item">✓ Priority Support</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Plan Modal -->
+<div class="modal fade" id="changePlanModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ChangePlan" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="subscriptionId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Change Subscription Plan</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>New Plan</label>
+                        <select name="newPlanId" class="form-control" required>
+                            <option value="">Select a plan...</option>
+                            <!-- Plans would be loaded here -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Billing Cycle</label>
+                        <select name="billingCycle" class="form-control" required>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Yearly">Yearly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Change Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Process Payment Modal -->
+<div class="modal fade" id="processPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ProcessPayment" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="subscriptionId" value="@Model.Id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Process Payment</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Amount (₱)</label>
+                        <input name="amount" type="number" step="0.01" class="form-control" value="@Model.PriceAmount" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Method</label>
+                        <select name="paymentMethod" class="form-control" required>
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Check">Check</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Reference Number</label>
+                        <input name="reference" type="text" class="form-control" placeholder="Optional reference number" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Process Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.info-item value {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.action-buttons-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.feature-list-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.feature-item {
+    color: #10b981;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-suspended {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+</style>

@@ -1,0 +1,60 @@
+@model List<BudgetMasterFinal.Models.BudgetRequest>
+@{
+    ViewData["Title"] = "My Requests";
+    ViewData["PageTitle"] = "My Budget Requests";
+    Layout = "_DashboardLayout";
+}
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="/Budget/CreateRequest" class="btn-primary"><i class="fa-solid fa-plus"></i> New Request</a>
+    </div>
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-list-check"></i> My Submitted Requests</div>
+            <input type="text" class="filter-input" id="searchInput" placeholder="Search..." onkeyup="filterTable()" />
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table" id="reqTable">
+                    <thead>
+                        <tr><th>Title</th><th>Department</th><th>Amount</th><th>Priority</th><th>Date</th><th>Status</th><th>Notes</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            <tr>
+                                <td><strong>@r.Title</strong></td>
+                                <td>@(r.Department?.Name ?? "â€”")</td>
+                                <td>â‚±@r.RequestedAmount.ToString("N0")</td>
+                                <td><span class="role-badge role-@r.Category.ToLower()">@r.Category</span></td>
+                                <td>@r.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td><span class="status-badge status-@r.Status.ToLower()">@r.Status</span></td>
+                                <td style="color:var(--muted);font-size:0.85rem;">@(r.ReviewerNotes?.Length > 30 ? r.ReviewerNotes.Substring(0,30)+"â€¦" : r.ReviewerNotes ?? "â€”")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <p>You have no requests yet.</p>
+                    <a href="/Budget/CreateRequest" class="btn-primary" style="margin-top:1rem;display:inline-flex;">Submit Your First Request</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section Scripts {
+<script>
+function filterTable() {
+    const v = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#reqTable tbody tr').forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(v) ? '' : 'none';
+    });
+}
+</script>
+}
+

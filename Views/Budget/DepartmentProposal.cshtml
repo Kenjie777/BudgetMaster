@@ -1,0 +1,255 @@
+@{
+    ViewData["Title"] = "Budget Proposal";
+    var department = ViewBag.Department as BudgetMasterFinal.Models.Department;
+    var budgets = ViewBag.Budgets as List<BudgetMasterFinal.Models.Budget>;
+}
+
+<div class="dash-container">
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-file-invoice-dollar"></i> New Proposal</div>
+        </div>
+        <div class="card-body">
+            <form method="post" action="/Budget/CreateRequest">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="DepartmentId" value="@department?.Id" />
+                
+                <div class="erp-form-grid">
+                    <div class="form-group">
+                        <label for="Title">Title *</label>
+                        <input type="text" id="Title" name="Title" class="form-input" required 
+                               placeholder="e.g., Q2 Marketing Campaign Budget" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="Category">Category *</label>
+                        <select id="Category" name="Category" class="form-input" required>
+                            <option value="">Select Category</option>
+                            <option value="Operational">Operational Expenses</option>
+                            <option value="Capital">Capital Expenditure</option>
+                            <option value="General">General Budget</option>
+                            <option value="Emergency">Emergency Fund</option>
+                            <option value="Project">Project-Specific</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="RequestedAmount">Amount *</label>
+                        <input type="number" id="RequestedAmount" name="RequestedAmount" 
+                               class="form-input" step="0.01" min="0" required 
+                               placeholder="0.00" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="BudgetId">Budget (Optional)</label>
+                        <select id="BudgetId" name="BudgetId" class="form-input">
+                            <option value="">Select existing budget</option>
+                            @if (budgets != null)
+                            {
+                                @foreach (var budget in budgets)
+                                {
+                                    <option value="@budget.Id">@budget.Title (FY @budget.FiscalYear)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group span-2">
+                    <label for="Justification">Justification *</label>
+                    <textarea id="Justification" name="Justification" class="form-textarea" 
+                              rows="6" required placeholder="Business justification and expected outcomes"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Submit
+                    </button>
+                    <a href="/Budget/DepartmentBudgets" class="btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-lightbulb"></i> Guidelines</div>
+            </div>
+            <div class="card-body">
+                <div class="guidelines-grid">
+                    <div class="guideline-item">
+                        <div class="gi-icon">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </div>
+                        <div class="gi-content">
+                            <h5>Clear Objectives</h5>
+                            <p>Define specific, measurable business objectives</p>
+                        </div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="gi-icon">
+                            <i class="fa-solid fa-calculator"></i>
+                        </div>
+                        <div class="gi-content">
+                            <h5>Cost Analysis</h5>
+                            <p>Include detailed cost breakdown and ROI projections</p>
+                        </div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="gi-icon">
+                            <i class="fa-solid fa-calendar-alt"></i>
+                        </div>
+                        <div class="gi-content">
+                            <h5>Timeline</h5>
+                            <p>Provide realistic timeline with key milestones</p>
+                        </div>
+                    </div>
+                    <div class="guideline-item">
+                        <div class="gi-icon">
+                            <i class="fa-solid fa-shield-alt"></i>
+                        </div>
+                        <div class="gi-content">
+                            <h5>Risk Management</h5>
+                            <p>Identify potential risks and mitigation strategies</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-route"></i> Process</div>
+            </div>
+            <div class="card-body">
+                <div class="approval-flow">
+                    <div class="af-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Department Head Review</h4>
+                            <p>Initial operational review and approval by you as Department Head</p>
+                        </div>
+                    </div>
+                    <div class="af-arrow">→</div>
+                    <div class="af-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Financial Validation</h4>
+                            <p>Finance Manager reviews for budget compliance and financial feasibility</p>
+                        </div>
+                    </div>
+                    <div class="af-arrow">→</div>
+                    <div class="af-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Implementation</h4>
+                            <p>Approved proposals are implemented and budget allocations are updated</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.guidelines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.guideline-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.gi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #6366f1;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.gi-content h5 {
+    margin: 0 0 0.25rem 0;
+    color: #1e293b;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.gi-content p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.approval-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+}
+
+.af-step {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 200px;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #6366f1;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.step-content h4 {
+    margin: 0 0 0.25rem 0;
+    color: #1e293b;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.step-content p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.af-arrow {
+    color: #9ca3af;
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+@@media (max-width: 768px) {
+    .approval-flow {
+        flex-direction: column;
+    }
+    
+    .af-arrow {
+        transform: rotate(90deg);
+    }
+}
+</style>

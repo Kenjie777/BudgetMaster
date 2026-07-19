@@ -1,0 +1,76 @@
+@model BudgetMasterFinal.Models.ViewModels.AdminUserCreateViewModel
+@{
+    ViewData["Title"] = "Add User";
+    ViewData["PageTitle"] = "Add User";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-user-plus"></i>
+            <h2>Add New User</h2>
+            <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">
+                <i class="fa-solid fa-info-circle"></i> A secure temporary password will be automatically generated and emailed to the user.
+            </p>
+        </div>
+        <form asp-action="Create" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="auth-error"></div>
+            
+            <div class="erp-form-grid">
+                <div class="form-group">
+                    <label asp-for="FirstName" class="form-label">First Name <span class="required">*</span></label>
+                    <input asp-for="FirstName" class="form-input" required />
+                    <span asp-validation-for="FirstName" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="LastName" class="form-label">Last Name <span class="required">*</span></label>
+                    <input asp-for="LastName" class="form-input" required />
+                    <span asp-validation-for="LastName" class="field-error"></span>
+                </div>
+                <div class="form-group span-2">
+                    <label asp-for="Email" class="form-label">Email Address <span class="required">*</span></label>
+                    <input asp-for="Email" type="email" class="form-input" required />
+                    <span asp-validation-for="Email" class="field-error"></span>
+                    <small style="color: #666; font-size: 12px;">The welcome email with temporary password will be sent to this address.</small>
+                </div>
+                <div class="form-group">
+                    <label asp-for="DepartmentId" class="form-label">Department</label>
+                    <select asp-for="DepartmentId" class="form-input form-select">
+                        <option value="">No Department</option>
+                        @foreach (var d in Model.Departments)
+                        {
+                            <option value="@d.Id">@d.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Role" class="form-label">Role <span class="required">*</span></label>
+                    <select asp-for="Role" class="form-input form-select" required>
+                        <option value="FinanceManager">Finance Manager</option>
+                        <option value="Accountant">Accountant</option>
+                        <option value="DepartmentHead">Department Head</option>
+                        <option value="Auditor">Auditor</option>
+                        <option value="Employee" selected>Employee</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="background: #e7f3ff; border-left: 4px solid #0c5460; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <strong style="color: #0c5460;"><i class="fa-solid fa-shield-halved"></i> Secure Onboarding Process:</strong>
+                <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #0c5460;">
+                    <li>A secure 16-character temporary password will be automatically generated</li>
+                    <li>The user will receive a professional welcome email with login credentials</li>
+                    <li>They must change their password immediately after first login</li>
+                    <li>The temporary password is never displayed in the application</li>
+                </ul>
+            </div>
+            
+            <div class="form-actions">
+                <a href="/UserManagement/Index" class="btn-secondary"><i class="fa-solid fa-times"></i> Cancel</a>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Create User & Send Email</button>
+            </div>
+        </form>
+    </div>
+</div>

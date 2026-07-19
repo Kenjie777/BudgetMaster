@@ -1,0 +1,238 @@
+@model List<BudgetMasterFinal.Models.Forecast>
+@{
+    ViewData["Title"] = "Forecast Integration";
+    ViewData["PageTitle"] = "Forecast Integration";
+    Layout = "_DashboardLayout";
+    
+    int year = ViewBag.Year ?? DateTime.Now.Year;
+    decimal totalAllocated = ViewBag.TotalAllocated ?? 0;
+    decimal totalActualSpend = ViewBag.TotalActualSpend ?? 0;
+    decimal totalActualRevenue = ViewBag.TotalActualRevenue ?? 0;
+    decimal totalActualExpenses = ViewBag.TotalActualExpenses ?? 0;
+    decimal totalProjectedRevenue = ViewBag.TotalProjectedRevenue ?? 0;
+    decimal totalProjectedExpenses = ViewBag.TotalProjectedExpenses ?? 0;
+    decimal revenueVariance = ViewBag.RevenueVariance ?? 0;
+    decimal expenseVariance = ViewBag.ExpenseVariance ?? 0;
+}
+
+<div class="dash-container">
+    <div class="page-actions" style="margin-bottom: 2rem;">
+        <a href="/Consolidation/Index?year=@year" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Consolidation
+        </a>
+        <form method="get" style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-weight: 500;">Fiscal Year:</label>
+            <select name="year" class="form-input-sm" onchange="this.form.submit()">
+                @for (int y = DateTime.Now.Year + 1; y >= DateTime.Now.Year - 3; y--)
+                {
+                    <option value="@y" selected="@(y == year)">@y</option>
+                }
+            </select>
+        </form>
+    </div>
+
+    <!-- Actual vs Forecast Comparison -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-balance-scale"></i> Actual vs Forecast Comparison — FY @year</div>
+        </div>
+        <div class="card-body">
+            <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
+                <div class="kpi-card-neutral">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Actual Revenue</div>
+                        <div class="kpi-value">₱@totalActualRevenue.ToString("N0")</div>
+                        <div class="kpi-sub">Recorded income</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card-neutral">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white;">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Projected Revenue</div>
+                        <div class="kpi-value">₱@totalProjectedRevenue.ToString("N0")</div>
+                        <div class="kpi-sub">Forecasted income</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card-neutral">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;">
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Actual Expenses</div>
+                        <div class="kpi-value">₱@totalActualExpenses.ToString("N0")</div>
+                        <div class="kpi-sub">Recorded costs</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card-neutral">
+                    <div class="kpi-icon" style="background: linear-gradient(135deg, #fb923c 0%, #f97316 100%); color: white;">
+                        <i class="fa-solid fa-chart-area"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Projected Expenses</div>
+                        <div class="kpi-value">₱@totalProjectedExpenses.ToString("N0")</div>
+                        <div class="kpi-sub">Forecasted costs</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variance Analysis -->
+            <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                <div style="padding: 1.5rem; background: @(revenueVariance >= 0 ? "#d1fae5" : "#fee2e2"); border-radius: 8px;">
+                    <div style="font-size: 0.875rem; color: @(revenueVariance >= 0 ? "#065f46" : "#991b1b"); margin-bottom: 0.5rem; font-weight: 600;">
+                        Revenue Variance
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; color: @(revenueVariance >= 0 ? "#065f46" : "#991b1b");">
+                        @(revenueVariance >= 0 ? "+" : "")₱@Math.Abs(revenueVariance).ToString("N0")
+                    </div>
+                    <div style="font-size: 0.875rem; color: @(revenueVariance >= 0 ? "#047857" : "#dc2626"); margin-top: 0.5rem;">
+                        @(revenueVariance >= 0 ? "Above forecast" : "Below forecast")
+                    </div>
+                </div>
+                
+                <div style="padding: 1.5rem; background: @(expenseVariance <= 0 ? "#d1fae5" : "#fee2e2"); border-radius: 8px;">
+                    <div style="font-size: 0.875rem; color: @(expenseVariance <= 0 ? "#065f46" : "#991b1b"); margin-bottom: 0.5rem; font-weight: 600;">
+                        Expense Variance
+                    </div>
+                    <div style="font-size: 2rem; font-weight: 700; color: @(expenseVariance <= 0 ? "#065f46" : "#991b1b");">
+                        @(expenseVariance >= 0 ? "+" : "")₱@Math.Abs(expenseVariance).ToString("N0")
+                    </div>
+                    <div style="font-size: 0.875rem; color: @(expenseVariance <= 0 ? "#047857" : "#dc2626"); margin-top: 0.5rem;">
+                        @(expenseVariance <= 0 ? "Under forecast" : "Over forecast")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecast Details -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-crystal-ball"></i> Active Forecasts — FY @year</div>
+            <a href="/Forecast/Create" class="btn-primary">
+                <i class="fa-solid fa-plus"></i> Create Forecast
+            </a>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Period</th>
+                            <th>Method</th>
+                            <th>Projected Revenue</th>
+                            <th>Projected Expenses</th>
+                            <th>Net Income</th>
+                            <th>Growth Rate</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var forecast in Model)
+                        {
+                            var netIncome = forecast.ProjectedRevenue - forecast.ProjectedExpenses;
+                            <tr>
+                                <td><strong>@forecast.Title</strong></td>
+                                <td>@forecast.Period</td>
+                                <td><span class="badge-info">@forecast.ForecastMethod</span></td>
+                                <td class="text-green fw-bold">₱@forecast.ProjectedRevenue.ToString("N0")</td>
+                                <td class="text-red fw-bold">₱@forecast.ProjectedExpenses.ToString("N0")</td>
+                                <td class="@(netIncome >= 0 ? "text-green" : "text-red") fw-bold">
+                                    @(netIncome >= 0 ? "+" : "")₱@Math.Abs(netIncome).ToString("N0")
+                                </td>
+                                <td class="@(forecast.GrowthRatePercent >= 0 ? "text-green" : "text-red") fw-bold">
+                                    @(forecast.GrowthRatePercent >= 0 ? "+" : "")@forecast.GrowthRatePercent.ToString("F1")%
+                                </td>
+                                <td>@forecast.ConfidencePercent%</td>
+                                <td>
+                                    <span class="status-badge @(forecast.Status == "Active" ? "status-active" : forecast.Status == "Draft" ? "status-pending" : "status-closed")">
+                                        @forecast.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-crystal-ball"></i>
+                    <p>No forecasts found for FY @year. <a href="/Forecast/Create">Create a forecast</a> to enable forecast integration.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .kpi-card-neutral {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .kpi-card-neutral:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .kpi-card-neutral .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .kpi-card-neutral .kpi-info {
+        flex: 1;
+    }
+    
+    .kpi-card-neutral .kpi-label {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+    
+    .kpi-card-neutral .kpi-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .kpi-card-neutral .kpi-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    
+    .badge-info {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background: #e3f2fd;
+        color: #1976d2;
+        border-radius: 4px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+    }
+</style>

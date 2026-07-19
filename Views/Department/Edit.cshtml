@@ -1,0 +1,45 @@
+@model BudgetMasterFinal.Models.Department
+@{
+    ViewData["Title"] = "Edit Department";
+    ViewData["PageTitle"] = "Edit Department";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header"><i class="fa-solid fa-pen"></i><h2>Edit Department</h2></div>
+        <form asp-action="Edit" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            <div class="erp-form-grid">
+                <div class="form-group span-2">
+                    <label class="form-label">Department Name</label>
+                    <input asp-for="Name" class="form-input" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Head of Department</label>
+                    <input asp-for="HeadOfDepartment" class="form-input" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Budget Allocation (₱)</label>
+                    <input asp-for="BudgetAllocation" type="number" class="form-input" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <div class="checkbox-label">
+                        <input asp-for="IsActive" type="checkbox" class="form-checkbox" />
+                        <span class="checkbox-custom"></span>
+                        Active
+                    </div>
+                </div>
+                <div class="form-group span-2">
+                    <label class="form-label">Description</label>
+                    <textarea asp-for="Description" class="form-input form-textarea" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Department/Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-save"></i> Update</button>
+            </div>
+        </form>
+    </div>
+</div>

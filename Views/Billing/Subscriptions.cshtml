@@ -1,0 +1,677 @@
+@model IEnumerable<BudgetMasterFinal.Models.Subscription>
+@{
+    ViewData["Title"] = "Subscription Management";
+    ViewData["PageTitle"] = "Subscription Management";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Active Subscriptions</div>
+                <div class="kpi-value">@Model.Count(s => s.Status == "Active")</div>
+                <div class="kpi-sub">Paying customers</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Trial Subscriptions</div>
+                <div class="kpi-value">@Model.Count(s => s.Status == "Trial")</div>
+                <div class="kpi-sub">Active trials</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Monthly Revenue</div>
+                <div class="kpi-value">₱@Model.Where(s => s.Status == "Active" && s.BillingCycle == "Monthly").Sum(s => s.PriceAmount).ToString("N0")</div>
+                <div class="kpi-sub">From active subscriptions</div>
+            </div>
+        </div>
+        <div class="kpi-card red">
+            <div class="kpi-icon"><i class="fa-solid fa-exclamation-triangle"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Needs Attention</div>
+                <div class="kpi-value">@Model.Count(s => s.Status == "Suspended" || s.EndDate <= DateTime.UtcNow.AddDays(7))</div>
+                <div class="kpi-sub">Expiring or suspended</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-credit-card"></i> Subscription Management</div>
+            <div class="card-filters">
+                <select id="statusFilter" class="filter-input">
+                    <option value="">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Suspended">Suspended</option>
+                    <option value="Trial">Trial</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+                <input type="text" id="searchInput" class="filter-input" placeholder="Search companies..." />
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="subscriptions-grid" id="subscriptionsGrid">
+                    @foreach (var subscription in Model.OrderByDescending(s => s.CreatedAt))
+                    {
+                        var daysUntilExpiry = (subscription.EndDate - DateTime.UtcNow).Days;
+                        var isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry > 0;
+                        var isExpired = daysUntilExpiry <= 0;
+                        
+                        <div class="subscription-card @subscription.Status.ToLower()" data-status="@subscription.Status" data-company="@subscription.Tenant.CompanyName.ToLower()">
+                            <div class="subscription-header">
+                                <div class="company-info">
+                                    <div class="company-avatar">
+                                        @subscription.Tenant.CompanyName.Substring(0, Math.Min(2, subscription.Tenant.CompanyName.Length)).ToUpper()
+                                    </div>
+                                    <div class="company-details">
+                                        <h3>@subscription.Tenant.CompanyName</h3>
+                                        <p>@subscription.SubscriptionPlan.Name</p>
+                                    </div>
+                                </div>
+                                <div class="subscription-status">
+                                    <span class="status-badge @(subscription.Status == "Active" ? "status-active" : subscription.Status == "Suspended" ? "status-pending" : subscription.Status == "Trial" ? "status-draft" : "status-closed")">
+                                        @subscription.Status
+                                    </span>
+                                    @if (isExpiringSoon)
+                                    {
+                                        <span class="expiry-warning">
+                                            <i class="fa-solid fa-clock"></i> Expires in @daysUntilExpiry days
+                                        </span>
+                                    }
+                                    @if (isExpired)
+                                    {
+                                        <span class="expiry-danger">
+                                            <i class="fa-solid fa-exclamation-triangle"></i> Expired
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="subscription-details">
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <i class="fa-solid fa-calendar"></i>
+                                        <div>
+                                            <span class="label">Billing Cycle</span>
+                                            <span class="value">@subscription.BillingCycle</span>
+                                        </div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fa-solid fa-dollar-sign"></i>
+                                        <div>
+                                            <span class="label">Price</span>
+                                            <span class="value">₱@subscription.PriceAmount.ToString("N0")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <i class="fa-solid fa-users"></i>
+                                        <div>
+                                            <span class="label">Users</span>
+                                            <span class="value">@subscription.CurrentUsers / @subscription.SubscriptionPlan.MaxUsers</span>
+                                        </div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fa-solid fa-coins"></i>
+                                        <div>
+                                            <span class="label">Credit Balance</span>
+                                            <span class="value">₱@((subscription.CreditBalance ?? 0).ToString("N0"))</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="date-info">
+                                    <div class="date-item">
+                                        <span class="label">Start Date</span>
+                                        <span class="value">@subscription.StartDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    <div class="date-item">
+                                        <span class="label">End Date</span>
+                                        <span class="value">@subscription.EndDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                    @if (subscription.NextBillingDate.HasValue)
+                                    {
+                                        <div class="date-item">
+                                            <span class="label">Next Billing</span>
+                                            <span class="value">@subscription.NextBillingDate.Value.ToString("MMM dd, yyyy")</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <h3>No Subscriptions Found</h3>
+                    <p>No tenant subscriptions are currently active in the system.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Subscription Details Modal -->
+<div class="modal-overlay" id="detailsModal">
+    <div class="modal-card large">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-eye"></i> Subscription Details</h3>
+            <button type="button" class="modal-close" onclick="closeDetailsModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="detailsModalBody">
+            <!-- Details will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeDetailsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Suspend Subscription Modal -->
+<div class="modal-overlay" id="suspendModal">
+    <div class="modal-card">
+        <form id="suspendForm" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pause"></i> Suspend Subscription</h3>
+                <button type="button" class="modal-close" onclick="closeSuspendModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to suspend the subscription for <strong id="suspendCompanyName"></strong>?</p>
+                <div class="form-group">
+                    <label>Reason for suspension</label>
+                    <textarea name="reason" class="form-input" rows="3" placeholder="Enter reason for suspension..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeSuspendModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Suspend Subscription</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Restore Subscription Modal -->
+<div class="modal-overlay" id="restoreModal">
+    <div class="modal-card">
+        <form id="restoreForm" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-play"></i> Restore Subscription</h3>
+                <button type="button" class="modal-close" onclick="closeRestoreModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to restore the subscription for <strong id="restoreCompanyName"></strong>?</p>
+                <p class="text-muted">This will reactivate their access to the system.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeRestoreModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Restore Subscription</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Change Plan Modal -->
+<div class="modal-overlay" id="changePlanModal">
+    <div class="modal-card">
+        <form id="changePlanForm" method="post" action="@Url.Action("ChangePlan")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="subscriptionId" id="changePlanSubscriptionId" />
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-exchange-alt"></i> Change Subscription Plan</h3>
+                <button type="button" class="modal-close" onclick="closeChangePlanModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Change subscription plan for <strong id="changePlanCompanyName"></strong></p>
+                <div class="form-group">
+                    <label>New Plan</label>
+                    <select name="newPlanId" id="newPlanSelect" class="form-input" required>
+                        <option value="">Select a plan...</option>
+                        <!-- Plans will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Billing Cycle</label>
+                    <select name="billingCycle" class="form-input" required>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Yearly">Yearly</option>
+                    </select>
+                </div>
+                <div id="planPreview" class="plan-preview" style="display: none;">
+                    <h4>Plan Preview</h4>
+                    <div id="planDetails"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeChangePlanModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Change Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Issue Credit Modal -->
+<div class="modal-overlay" id="issueCreditModal">
+    <div class="modal-card">
+        <form id="issueCreditForm" method="post" action="@Url.Action("IssueCredit")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="tenantId" id="creditTenantId" />
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-coins"></i> Issue Credit</h3>
+                <button type="button" class="modal-close" onclick="closeIssueCreditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Issue credit to <strong id="creditCompanyName"></strong></p>
+                <div class="form-group">
+                    <label>Credit Amount (₱)</label>
+                    <input type="number" name="amount" class="form-input" min="1" step="0.01" placeholder="0.00" required />
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <textarea name="reason" class="form-input" rows="3" placeholder="Enter reason for credit..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Expiry Date (Optional)</label>
+                    <input type="date" name="expiryDate" class="form-input" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeIssueCreditModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Issue Credit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Process Payment Modal -->
+<div class="modal-overlay" id="processPaymentModal">
+    <div class="modal-card">
+        <form id="processPaymentForm" method="post" action="@Url.Action("ProcessPayment")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="subscriptionId" id="paymentSubscriptionId" />
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-credit-card"></i> Process Payment</h3>
+                <button type="button" class="modal-close" onclick="closeProcessPaymentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Process payment for <strong id="paymentCompanyName"></strong></p>
+                <div class="form-group">
+                    <label>Payment Amount (₱)</label>
+                    <input type="number" name="amount" class="form-input" min="1" step="0.01" placeholder="0.00" required />
+                </div>
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select name="paymentMethod" class="form-input" required>
+                        <option value="">Select payment method...</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Check">Check</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Payment Reference (Optional)</label>
+                    <input type="text" name="reference" class="form-input" placeholder="Transaction ID, Check number, etc." />
+                </div>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea name="notes" class="form-input" rows="2" placeholder="Additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeProcessPaymentModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Process Payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.subscriptions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.subscription-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.subscription-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.subscription-card.active {
+    border-left: 4px solid #10b981;
+}
+
+.subscription-card.suspended {
+    border-left: 4px solid #f59e0b;
+}
+
+.subscription-card.trial {
+    border-left: 4px solid #06b6d4;
+}
+
+.subscription-card.cancelled {
+    border-left: 4px solid #ef4444;
+    opacity: 0.8;
+}
+
+.subscription-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.company-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.company-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.company-details h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.company-details p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.subscription-status {
+    text-align: right;
+}
+
+.expiry-warning {
+    display: block;
+    color: #f59e0b;
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+.expiry-danger {
+    display: block;
+    color: #ef4444;
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+.subscription-details {
+    margin-bottom: 1.5rem;
+}
+
+.detail-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.detail-item i {
+    width: 16px;
+    color: #6366f1;
+    font-size: 0.9rem;
+}
+
+.detail-item .label {
+    display: block;
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.detail-item .value {
+    display: block;
+    color: #1e293b;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.date-info {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+}
+
+.date-item {
+    text-align: center;
+}
+
+.date-item .label {
+    display: block;
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.date-item .value {
+    display: block;
+    color: #1e293b;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.subscription-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.modal-card.large {
+    max-width: 800px;
+}
+
+.plan-preview {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.plan-preview h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.text-muted {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+@@media (max-width: 768px) {
+    .subscriptions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .detail-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .subscription-actions {
+        justify-content: flex-start;
+    }
+}
+</style>
+
+<script>
+// Modal functions
+function showDetailsModal(subscriptionId) {
+    // In a real implementation, you would fetch details via AJAX
+    document.getElementById('detailsModalBody').innerHTML = '<p>Loading subscription details...</p>';
+    document.getElementById('detailsModal').classList.add('open');
+}
+
+function closeDetailsModal() {
+    document.getElementById('detailsModal').classList.remove('open');
+}
+
+function showSuspendModal(subscriptionId, companyName) {
+    document.getElementById('suspendCompanyName').textContent = companyName;
+    document.getElementById('suspendForm').action = '@Url.Action("SuspendSubscription")/' + subscriptionId;
+    document.getElementById('suspendModal').classList.add('open');
+}
+
+function closeSuspendModal() {
+    document.getElementById('suspendModal').classList.remove('open');
+}
+
+function showRestoreModal(subscriptionId, companyName) {
+    document.getElementById('restoreCompanyName').textContent = companyName;
+    document.getElementById('restoreForm').action = '@Url.Action("RestoreSubscription")/' + subscriptionId;
+    document.getElementById('restoreModal').classList.add('open');
+}
+
+function closeRestoreModal() {
+    document.getElementById('restoreModal').classList.remove('open');
+}
+
+function showChangePlanModal(subscriptionId, companyName, currentPlanId) {
+    document.getElementById('changePlanCompanyName').textContent = companyName;
+    document.getElementById('changePlanSubscriptionId').value = subscriptionId;
+    
+    // Load available plans (in real implementation, fetch via AJAX)
+    loadAvailablePlans(currentPlanId);
+    
+    document.getElementById('changePlanModal').classList.add('open');
+}
+
+function closeChangePlanModal() {
+    document.getElementById('changePlanModal').classList.remove('open');
+}
+
+function showIssueCreditModal(tenantId, companyName) {
+    document.getElementById('creditCompanyName').textContent = companyName;
+    document.getElementById('creditTenantId').value = tenantId;
+    document.getElementById('issueCreditModal').classList.add('open');
+}
+
+function closeIssueCreditModal() {
+    document.getElementById('issueCreditModal').classList.remove('open');
+}
+
+function showProcessPaymentModal(subscriptionId, companyName) {
+    document.getElementById('paymentCompanyName').textContent = companyName;
+    document.getElementById('paymentSubscriptionId').value = subscriptionId;
+    document.getElementById('processPaymentModal').classList.add('open');
+}
+
+function closeProcessPaymentModal() {
+    document.getElementById('processPaymentModal').classList.remove('open');
+}
+
+function loadAvailablePlans(currentPlanId) {
+    // In real implementation, this would be an AJAX call
+    const select = document.getElementById('newPlanSelect');
+    select.innerHTML = '<option value="">Select a plan...</option>';
+    
+    // Mock plans - replace with actual AJAX call
+    const plans = [
+        { id: 1, name: 'Basic Plan', monthlyPrice: 999 },
+        { id: 2, name: 'Professional Plan', monthlyPrice: 2999 },
+        { id: 3, name: 'Enterprise Plan', monthlyPrice: 9999 }
+    ];
+    
+    plans.forEach(plan => {
+        if (plan.id != currentPlanId) {
+            const option = document.createElement('option');
+            option.value = plan.id;
+            option.textContent = `${plan.name} - ₱${plan.monthlyPrice.toLocaleString()}/month`;
+            select.appendChild(option);
+        }
+    });
+}
+
+// Search and filter functionality
+document.getElementById('searchInput').addEventListener('input', function() {
+    filterSubscriptions();
+});
+
+document.getElementById('statusFilter').addEventListener('change', function() {
+    filterSubscriptions();
+});
+
+function filterSubscriptions() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const cards = document.querySelectorAll('.subscription-card');
+
+    cards.forEach(card => {
+        const companyName = card.getAttribute('data-company');
+        const status = card.getAttribute('data-status');
+        
+        const matchesSearch = companyName.includes(searchTerm);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        
+        if (matchesSearch && matchesStatus) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('open');
+    }
+});
+</script>

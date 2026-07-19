@@ -1,0 +1,211 @@
+@{
+    ViewData["Title"] = "Verify OTP";
+    Layout = "_Layout";
+}
+
+<div class="auth-page">
+    <div class="auth-left">
+        <div class="auth-left-content">
+            <div class="auth-brand">
+                <div class="brand-icon-lg"><i class="fa-solid fa-shield-halved"></i></div>
+                <span class="auth-brand-name">BudgetMaster</span>
+            </div>
+            <h2 class="auth-tagline">Two-Factor Authentication</h2>
+            <p class="auth-desc">Enter the 6-digit code from your authenticator app to complete your login.</p>
+            <div class="auth-features">
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Enhanced Security</div>
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Protected Account</div>
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Secure Access</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-card">
+            <div class="auth-card-header">
+                <div class="auth-welcome-logo">
+                    <img src="~/images/BudgetMasterLogo1.png" alt="BudgetMaster" class="welcome-logo" />
+                </div>
+                <h1 class="auth-title">Enter Verification Code</h1>
+                <p class="auth-subtitle">Open your authenticator app and enter the 6-digit code</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="auth-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div asp-validation-summary="ModelOnly"></div>
+                </div>
+            }
+
+            <form asp-action="VerifyOTP" method="post" class="auth-form" id="otpForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                <div class="otp-input-container">
+                    <input type="text" maxlength="1" class="otp-digit" name="digit1" id="digit1" autocomplete="off" />
+                    <input type="text" maxlength="1" class="otp-digit" name="digit2" id="digit2" autocomplete="off" />
+                    <input type="text" maxlength="1" class="otp-digit" name="digit3" id="digit3" autocomplete="off" />
+                    <input type="text" maxlength="1" class="otp-digit" name="digit4" id="digit4" autocomplete="off" />
+                    <input type="text" maxlength="1" class="otp-digit" name="digit5" id="digit5" autocomplete="off" />
+                    <input type="text" maxlength="1" class="otp-digit" name="digit6" id="digit6" autocomplete="off" />
+                </div>
+                <input type="hidden" name="code" id="codeInput" />
+
+                <button type="submit" class="btn-auth-primary" id="verifyBtn">
+                    <span class="btn-text"><i class="fa-solid fa-shield-check"></i> Verify Code</span>
+                    <span class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                </button>
+            </form>
+
+            <div class="auth-help">
+                <p class="help-text">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Can't access your authenticator app? Contact your administrator for assistance.
+                </p>
+            </div>
+
+            <p class="auth-back"><a href="/Account/Login"><i class="fa-solid fa-arrow-left"></i> Back to login</a></p>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.otp-input-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.otp-digit {
+    width: 56px;
+    height: 64px;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s;
+    background: white;
+}
+
+.otp-digit:focus {
+    outline: none;
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.auth-help {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f0f9ff;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+}
+
+.help-text {
+    margin: 0;
+    font-size: 14px;
+    color: #1e40af;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.help-text i {
+    font-size: 16px;
+}
+
+@@media (max-width: 768px) {
+    .otp-digit {
+        width: 48px;
+        height: 56px;
+        font-size: 24px;
+    }
+    
+    .otp-input-container {
+        gap: 8px;
+    }
+}
+</style>
+}
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.otp-digit');
+    
+    inputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            const value = e.target.value;
+            
+            // Only allow numbers
+            if (!/^\d$/.test(value)) {
+                e.target.value = '';
+                return;
+            }
+            
+            // Move to next input
+            if (value && index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+            
+            // Update hidden input with complete code
+            updateCodeInput();
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            // Handle backspace
+            if (e.key === 'Backspace') {
+                if (!e.target.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+                setTimeout(() => updateCodeInput(), 10);
+            }
+            
+            // Handle paste
+            if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                navigator.clipboard.readText().then(text => {
+                    const digits = text.replace(/\D/g, '').slice(0, 6);
+                    digits.split('').forEach((digit, i) => {
+                        if (inputs[i]) {
+                            inputs[i].value = digit;
+                        }
+                    });
+                    if (digits.length === 6) {
+                        inputs[5].focus();
+                    }
+                    updateCodeInput();
+                });
+            }
+        });
+    });
+    
+    // Focus first input on load
+    inputs[0].focus();
+    
+    // Form submission
+    document.getElementById('otpForm').addEventListener('submit', function(e) {
+        const code = Array.from(inputs).map(input => input.value).join('');
+        
+        if (code.length !== 6) {
+            e.preventDefault();
+            alert('Please enter all 6 digits');
+            return false;
+        }
+        
+        document.querySelector('.btn-text').classList.add('hidden');
+        document.querySelector('.btn-loader').classList.remove('hidden');
+    });
+});
+
+function updateCodeInput() {
+    const inputs = document.querySelectorAll('.otp-digit');
+    const code = Array.from(inputs).map(input => input.value).join('');
+    document.getElementById('codeInput').value = code;
+}
+</script>
+}

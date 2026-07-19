@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Add Department";
+    ViewData["PageTitle"] = "Create Department";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-sitemap"></i>
+            <h2>New Department</h2>
+        </div>
+        <form asp-action="Create" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            <div class="erp-form-grid">
+                <div class="form-group span-2">
+                    <label class="form-label">Department Name <span class="required">*</span></label>
+                    <input name="Name" class="form-input" required placeholder="e.g. Finance & Accounting" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Head of Department</label>
+                    <input name="HeadOfDepartment" class="form-input" placeholder="Full name" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Budget Allocation (₱)</label>
+                    <input name="BudgetAllocation" type="number" class="form-input" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="form-group span-2">
+                    <label class="form-label">Description</label>
+                    <textarea name="Description" class="form-input form-textarea" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Department/Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-save"></i> Create Department</button>
+            </div>
+        </form>
+    </div>
+</div>

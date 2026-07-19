@@ -1,0 +1,144 @@
+@model BudgetMasterFinal.Models.ViewModels.AccountantDashboardViewModel
+@{
+    ViewData["Title"] = "Accountant Dashboard";
+    ViewData["PageTitle"] = "Accounting Ledger";
+    Layout = "_DashboardLayout";
+}
+<div class="dash-container">
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-receipt"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Transactions This Month</div>
+                <div class="kpi-value">@Model.TotalTransactionsThisMonth</div>
+                <div class="kpi-sub">@Model.TotalTransactionsAllTime total all-time</div>
+            </div>
+            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+        </div>
+        <div class="kpi-card red">
+            <div class="kpi-icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Expenses</div>
+                <div class="kpi-value">₱@Model.TotalExpensesThisMonth.ToString("N0")</div>
+                <div class="kpi-sub">This month</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Income</div>
+                <div class="kpi-value">₱@Model.TotalIncomeThisMonth.ToString("N0")</div>
+                <div class="kpi-sub">This month</div>
+            </div>
+        </div>
+        <div class="kpi-card @(Model.NetThisMonth >= 0 ? "teal" : "orange")">
+            <div class="kpi-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Net This Month</div>
+                <div class="kpi-value">₱@Model.NetThisMonth.ToString("N0")</div>
+                <div class="kpi-sub">@(Model.NetThisMonth >= 0 ? "Positive cash flow" : "Negative cash flow")</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Record Transaction Panel -->
+    <div class="dash-card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-plus-circle" style="color:var(--primary)"></i> Record New Transaction</div>
+        </div>
+        <div class="card-body">
+            <form asp-controller="Variance" asp-action="CreateTransaction" method="post" class="erp-form">
+                @Html.AntiForgeryToken()
+                <div class="erp-form-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+                    <div class="form-group">
+                        <label class="form-label">Description <span class="required">*</span></label>
+                        <input name="Description" class="form-input" placeholder="e.g. Office Supplies" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount (₱) <span class="required">*</span></label>
+                        <input name="Amount" type="number" step="0.01" min="0" class="form-input" placeholder="0.00" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Type <span class="required">*</span></label>
+                        <select name="TransactionType" class="form-input form-select">
+                            <option value="Expense">Expense</option>
+                            <option value="Income">Income</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Budget</label>
+                        <select name="BudgetId" class="form-input form-select">
+                            <option value="">— Select Budget —</option>
+                            @foreach (var b in Model.ActiveBudgets)
+                            {
+                                <option value="@b.Id">@b.Title (@b.FiscalYear)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input name="TransactionDate" type="date" class="form-input" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end;">
+                        <button type="submit" class="btn-primary" style="width:100%;">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Transaction
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-list"></i> Recent Transactions</div>
+            <a href="/Variance/Transactions" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                <i class="fa-solid fa-list"></i> View All
+            </a>
+        </div>
+        <div class="card-body">
+            @if (Model.RecentTransactions.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Budget</th>
+                            <th>Department</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.RecentTransactions)
+                        {
+                            <tr>
+                                <td>@t.TransactionDate.ToString("MMM dd, yyyy")</td>
+                                <td><strong>@t.Description</strong></td>
+                                <td>@(t.Budget?.Title ?? "—")</td>
+                                <td>@(t.Department?.Name ?? "—")</td>
+                                <td>
+                                    <span class="status-badge @(t.TransactionType == "Income" ? "status-approved" : "status-pending")">
+                                        @(t.TransactionType == "Income" ? "↑ Income" : "↓ Expense")
+                                    </span>
+                                </td>
+                                <td><strong>₱@t.Amount.ToString("N2")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-receipt"></i>
+                    <p>No transactions recorded yet. Use the form above to record your first entry.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

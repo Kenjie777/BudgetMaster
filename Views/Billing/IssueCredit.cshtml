@@ -1,0 +1,107 @@
+@model BudgetMasterFinal.Models.BillingCredit
+@{
+    ViewData["Title"] = "Issue Credit";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="page-header">
+    <h1>Issue Credit</h1>
+    <p>Issue billing credit to a tenant</p>
+</div>
+
+<div class="content-wrapper">
+    <div class="card">
+        <div class="card-header">
+            <h3>Credit Details</h3>
+            <a href="@Url.Action("Credits")" class="btn btn-secondary">Back to Credits</a>
+        </div>
+        <div class="card-body">
+            <form asp-action="IssueCredit" method="post">
+                @Html.AntiForgeryToken()
+                
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label asp-for="TenantId">Tenant</label>
+                        <select asp-for="TenantId" class="form-control" required>
+                            <option value="">Select a tenant...</option>
+                            @foreach (var tenant in ViewBag.Tenants as List<BudgetMasterFinal.Models.Tenant>)
+                            {
+                                <option value="@tenant.Id">@tenant.CompanyName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="TenantId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label asp-for="CreditType">Credit Type</label>
+                        <select asp-for="CreditType" class="form-control" required>
+                            <option value="">Select credit type...</option>
+                            <option value="Promotional">Promotional</option>
+                            <option value="Refund">Refund</option>
+                            <option value="Compensation">Compensation</option>
+                            <option value="Adjustment">Adjustment</option>
+                            <option value="Bonus">Bonus</option>
+                        </select>
+                        <span asp-validation-for="CreditType" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label asp-for="Amount">Credit Amount (₱)</label>
+                        <input asp-for="Amount" class="form-control" type="number" step="0.01" min="0.01" required />
+                        <span asp-validation-for="Amount" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label asp-for="ExpiresAt">Expiration Date (Optional)</label>
+                        <input asp-for="ExpiresAt" class="form-control" type="date" />
+                        <small class="form-text text-muted">Leave blank for no expiration</small>
+                        <span asp-validation-for="ExpiresAt" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Reason">Reason</label>
+                    <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Explain why this credit is being issued" required></textarea>
+                    <span asp-validation-for="Reason" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Notes">Internal Notes (Optional)</label>
+                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Internal notes for reference"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Issue Credit</button>
+                    <a href="@Url.Action("Credits")" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Credit Guidelines</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <h5>Credit Types:</h5>
+                <ul class="mb-0">
+                    <li><strong>Promotional:</strong> Marketing credits or special offers</li>
+                    <li><strong>Refund:</strong> Refunds for overpayments or cancellations</li>
+                    <li><strong>Compensation:</strong> Credits for service issues or downtime</li>
+                    <li><strong>Adjustment:</strong> Billing adjustments or corrections</li>
+                    <li><strong>Bonus:</strong> Loyalty rewards or bonus credits</li>
+                </ul>
+            </div>
+            <div class="alert alert-warning">
+                <strong>Note:</strong> Credits will be automatically applied to the tenant's next billing cycle. 
+                All credit issuances are logged for audit purposes.
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,43 @@
+@model List<BudgetMasterFinal.Models.AuditLog>
+@{
+    ViewData["Title"] = "Audit Logs";
+    ViewData["PageTitle"] = "System Audit Logs";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-scroll"></i> Audit Logs</div>
+            <input type="text" class="filter-input" placeholder="Search..." onkeyup="filterLogs(this)" />
+        </div>
+        <div class="card-body">
+            <table class="dash-table" id="logTable">
+                <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Entity</th><th>IP Address</th></tr></thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+                            <td>@log.Timestamp.ToString("MMM dd, yyyy HH:mm:ss")</td>
+                            <td>@(log.User?.FullName ?? "System")</td>
+                            <td><span class="action-badge">@log.Action</span></td>
+                            <td>@log.EntityType @(log.EntityId.HasValue ? $"#{log.EntityId}" : "")</td>
+                            <td>@(log.IpAddress ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function filterLogs(input) {
+    const v = input.value.toLowerCase();
+    document.querySelectorAll('#logTable tbody tr').forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(v) ? '' : 'none';
+    });
+}
+</script>
+}

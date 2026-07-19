@@ -1,0 +1,231 @@
+@model BudgetMasterFinal.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    ViewData["PageTitle"] = "Dashboard";
+    Layout = "_DashboardLayout";
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+
+<div class="dash-container">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-wallet"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Budgeted</div>
+                <div class="kpi-value">@currency@Model.TotalAllocated.ToString("N0")</div>
+                <div class="kpi-sub">@Model.TotalBudgets active budgets</div>
+            </div>
+            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-coins"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Used</div>
+                <div class="kpi-value">@currency@Model.TotalUsed.ToString("N0")</div>
+                <div class="kpi-sub">@Model.VariancePercent.ToString("F1")% of budget allocated</div>
+            </div>
+            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+        </div>
+        <div class="kpi-card @(Model.VarianceAmount >= 0 ? "teal" : "red")">
+            <div class="kpi-icon"><i class="fa-solid fa-arrows-left-right-to-line"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Variance</div>
+                <div class="kpi-value">@currency@Model.VarianceAmount.ToString("N0")</div>
+                <div class="kpi-sub">@(Model.VarianceAmount >= 0 ? "Under budget" : "Over budget")</div>
+            </div>
+            <div class="kpi-trend @(Model.VarianceAmount >= 0 ? "up" : "down")">
+                <i class="fa-solid @(Model.VarianceAmount >= 0 ? "fa-arrow-trend-up" : "fa-arrow-trend-down")"></i>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Pending Requests</div>
+                <div class="kpi-value">@Model.PendingRequests</div>
+                <div class="kpi-sub">Awaiting approval</div>
+            </div>
+            <div class="kpi-trend neutral"><i class="fa-solid fa-clock"></i></div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-sitemap"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Departments</div>
+                <div class="kpi-value">@Model.TotalDepartments</div>
+                <div class="kpi-sub">Active departments</div>
+            </div>
+        </div>
+        <div class="kpi-card indigo">
+            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Team Members</div>
+                <div class="kpi-value">@Model.TotalUsers</div>
+                <div class="kpi-sub">Active users</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="dash-row">
+        <div class="dash-card chart-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-chart-area"></i> Budget vs Actual (6 Months)</div>
+            </div>
+            <div class="card-body">
+                <canvas id="budgetActualChart" height="250"></canvas>
+            </div>
+        </div>
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-list-check"></i> Recent Budget Requests</div>
+                <a href="/Budget/Requests" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                    <i class="fa-solid fa-list"></i> View All Requests
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentRequests.Any())
+                {
+                    <div class="request-list">
+                        @foreach (var req in Model.RecentRequests)
+                        {
+                            <div class="request-item">
+                                <div class="req-avatar">@req.RequestedByUser?.FirstName?.Substring(0,1)@req.RequestedByUser?.LastName?.Substring(0,1)</div>
+                                <div class="req-info">
+                                    <div class="req-title">@req.Title</div>
+                                    <div class="req-meta">@req.Department?.Name • @currency@req.RequestedAmount.ToString("N0")</div>
+                                </div>
+                                <span class="status-badge status-@req.Status.ToLower()">@req.Status</span>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>No recent requests</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-wallet"></i> Active Budgets</div>
+                <a href="/Budget/Index" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                    <i class="fa-solid fa-cog"></i> Manage
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentBudgets.Any())
+                {
+                    <table class="dash-table">
+                        <thead>
+                            <tr><th>Budget</th><th>Year</th><th>Allocated</th><th>Spent</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var b in Model.RecentBudgets)
+                            {
+                                var pct = b.AllocatedAmount > 0 ? (double)(b.UsedAmount / b.AllocatedAmount * 100) : 0;
+                                <tr>
+                                    <td><strong>@b.Title</strong></td>
+                                    <td>@b.FiscalYear</td>
+                                    <td>@currency@b.AllocatedAmount.ToString("N0")</td>
+                                    <td>
+                                        <div class="progress-wrap">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill @(pct > 90 ? "danger" : pct > 70 ? "warning" : "")" style="width:@pct%"></div>
+                                            </div>
+                                            <span class="progress-pct">@pct.ToString("F0")%</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-badge status-@b.Status.ToLower()">@b.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fa-solid fa-wallet"></i>
+                        <p>No budgets yet. <a href="/Budget/Create">Create one</a></p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-bell"></i> Notifications</div>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentNotifications.Any())
+                {
+                    @foreach (var n in Model.RecentNotifications)
+                    {
+                        <div class="notif-item notif-@n.Type.ToLower()">
+                            <div class="notif-dot"></div>
+                            <div class="notif-content">
+                                <div class="notif-title">@n.Title</div>
+                                <div class="notif-msg">@n.Message</div>
+                                <div class="notif-time">@n.CreatedAt.ToString("MMM dd, HH:mm")</div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <i class="fa-solid fa-bell-slash"></i>
+                        <p>No new notifications</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+var labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ChartLabels));
+var budgetData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BudgetData));
+var actualData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ActualData));
+
+new Chart(document.getElementById('budgetActualChart'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Budget',
+                data: budgetData,
+                backgroundColor: 'rgba(99,102,241,0.7)',
+                borderRadius: 6
+            },
+            {
+                label: 'Actual',
+                data: actualData,
+                backgroundColor: 'rgba(16,185,129,0.7)',
+                borderRadius: 6
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' }
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: { grid: { color: 'rgba(0,0,0,0.05)' } }
+        }
+    }
+});
+</script>
+}

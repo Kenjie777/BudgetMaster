@@ -1,0 +1,63 @@
+@model BudgetMasterFinal.Models.ScenarioPlan
+@{
+    ViewData["Title"] = "New Scenario";
+    ViewData["PageTitle"] = "Create Scenario Plan";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-diagram-project"></i>
+            <h2>New Scenario Plan</h2>
+            <p>Model different financial scenarios to understand potential outcomes.</p>
+        </div>
+        <form asp-action="Create" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            <div class="erp-form-grid">
+                <div class="form-group span-2">
+                    <label class="form-label">Scenario Name <span class="required">*</span></label>
+                    <input asp-for="Name" class="form-input" placeholder="e.g. Optimistic Growth 2025" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Scenario Type</label>
+                    <select asp-for="ScenarioType" class="form-input form-select">
+                        <option>Baseline</option>
+                        <option>BestCase</option>
+                        <option>WorstCase</option>
+                        <option>Custom</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fiscal Year</label>
+                    <input asp-for="FiscalYear" type="number" class="form-input" value="@DateTime.Now.Year" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Base Revenue (â‚±)</label>
+                    <input asp-for="BaseRevenue" type="number" class="form-input" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Base Expenses (â‚±)</label>
+                    <input asp-for="BaseExpenses" type="number" class="form-input" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Revenue Adjustment (%)</label>
+                    <input asp-for="RevenueAdjustmentPercent" type="number" class="form-input" step="0.01" placeholder="+10 or -5" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expense Adjustment (%)</label>
+                    <input asp-for="ExpenseAdjustmentPercent" type="number" class="form-input" step="0.01" placeholder="+5 or -10" />
+                </div>
+                <div class="form-group span-2">
+                    <label class="form-label">Description</label>
+                    <textarea asp-for="Description" class="form-input form-textarea" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Scenario/Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-save"></i> Create Scenario</button>
+            </div>
+        </form>
+    </div>
+</div>
+

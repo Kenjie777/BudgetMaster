@@ -1,0 +1,233 @@
+@model List<BudgetMasterFinal.Models.BudgetRequest>
+@{
+    ViewData["Title"] = "All Budget Requests";
+    ViewData["PageTitle"] = "Comprehensive Request Management";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Requests</div>
+                <div class="kpi-value">@Model.Count</div>
+                <div class="kpi-sub">All time</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Awaiting Validation</div>
+                <div class="kpi-value">@Model.Count(r => r.Status == "OperationallyApproved")</div>
+                <div class="kpi-sub">Ready for review</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Approved</div>
+                <div class="kpi-value">@Model.Count(r => r.Status == "Approved")</div>
+                <div class="kpi-sub">Fully approved</div>
+            </div>
+        </div>
+        <div class="kpi-card red">
+            <div class="kpi-icon"><i class="fa-solid fa-times-circle"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Rejected</div>
+                <div class="kpi-value">@Model.Count(r => r.Status == "Rejected" || r.Status == "FinanciallyRejected")</div>
+                <div class="kpi-sub">All rejections</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-list-check"></i> All Budget Requests</div>
+            <div class="request-tabs">
+                <button class="req-tab active" onclick="filterStatus('all')">All</button>
+                <button class="req-tab" onclick="filterStatus('Pending')">Pending Operational</button>
+                <button class="req-tab" onclick="filterStatus('OperationallyApproved')">Ready for Validation</button>
+                <button class="req-tab" onclick="filterStatus('Approved')">Approved</button>
+                <button class="req-tab" onclick="filterStatus('Rejected')">Rejected</button>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Requester</th>
+                            <th>Request Details</th>
+                            <th>Amount</th>
+                            <th>Workflow Status</th>
+                            <th>Operational Approval</th>
+                            <th>Financial Validation</th>
+                            <th>Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsTable">
+                        @foreach (var r in Model)
+                        {
+                            <tr data-status="@r.Status">
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-avatar-sm">
+                                            @r.RequestedByUser?.FirstName?.Substring(0, 1)@r.RequestedByUser?.LastName?.Substring(0, 1)
+                                        </div>
+                                        <div>
+                                            <div class="cell-main">@r.RequestedByUser?.FullName</div>
+                                            <div class="cell-sub">@(r.Department?.Name ?? "—")</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="cell-main">@r.Title</div>
+                                    <div class="cell-sub">@r.Category</div>
+                                </td>
+                                <td><strong>@r.RequestedAmount.ToString("C")</strong></td>
+                                <td>
+                                    <span class="status-badge status-@r.Status.ToLower()">
+                                        @switch (r.Status)
+                                        {
+                                            case "Pending":
+                                                @:Pending Operational Review
+                                                break;
+                                            case "OperationallyApproved":
+                                                @:Ready for Financial Validation
+                                                break;
+                                            case "Approved":
+                                                @:Fully Approved
+                                                break;
+                                            case "Rejected":
+                                                @:Rejected (Operational)
+                                                break;
+                                            case "FinanciallyRejected":
+                                                @:Rejected (Financial)
+                                                break;
+                                            default:
+                                                @r.Status
+                                                break;
+                                        }
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (r.OperationallyApprovedByUser != null)
+                                    {
+                                        <div class="cell-main text-green">✓ @r.OperationallyApprovedByUser.FullName</div>
+                                        <div class="cell-sub">@r.OperationalApprovalDate?.ToString("MMM dd, yyyy")</div>
+                                    }
+                                    else if (r.Status == "Rejected")
+                                    {
+                                        <div class="cell-main text-red">✗ Rejected</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="cell-sub">Pending</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (r.FinanciallyApprovedByUser != null)
+                                    {
+                                        <div class="cell-main text-green">✓ @r.FinanciallyApprovedByUser.FullName</div>
+                                        <div class="cell-sub">@r.FinancialApprovalDate?.ToString("MMM dd, yyyy")</div>
+                                    }
+                                    else if (r.FinanciallyRejectedByUser != null)
+                                    {
+                                        <div class="cell-main text-red">✗ @r.FinanciallyRejectedByUser.FullName</div>
+                                        <div class="cell-sub">@r.FinancialRejectionDate?.ToString("MMM dd, yyyy")</div>
+                                    }
+                                    else if (r.Status == "OperationallyApproved")
+                                    {
+                                        <div class="cell-sub text-orange">Awaiting Validation</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="cell-sub">—</div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="cell-main">@r.CreatedAt.ToString("MMM dd")</div>
+                                    <div class="cell-sub">@r.CreatedAt.ToString("yyyy")</div>
+                                </td>
+                                <td>
+                                    <div class="action-btns">
+                                        @if (r.Status == "OperationallyApproved")
+                                        {
+                                            <button class="btn-icon" onclick="openApprovalModal(@r.Id, 'Approved')" title="Approve">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                            <button class="btn-icon danger" onclick="openApprovalModal(@r.Id, 'Rejected')" title="Reject">
+                                                <i class="fa-solid fa-times"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-inbox"></i>
+                    <h3>No Budget Requests</h3>
+                    <p>Budget requests from users will appear here.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal-overlay" id="approvalModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="modalTitle">Financial Validation</h3>
+            <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form action="/Budget/ApproveRequest" method="post" id="approvalForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="modalId" name="id" />
+            <input type="hidden" id="modalAction" name="action" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Financial Validation Notes</label>
+                    <textarea name="notes" class="form-input form-textarea" rows="4" placeholder="Add financial validation notes, budget compliance checks, policy considerations..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary" id="modalSubmitBtn">Confirm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function filterStatus(status) {
+    document.querySelectorAll('.req-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('#requestsTable tr').forEach(row => {
+        row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+    });
+}
+
+function openApprovalModal(id, action) {
+    document.getElementById('modalId').value = id;
+    document.getElementById('modalAction').value = action;
+    document.getElementById('modalTitle').textContent = action === 'Approved' ? 'Approve Request' : 'Reject Request';
+    document.getElementById('modalSubmitBtn').textContent = action === 'Approved' ? 'Approve' : 'Reject';
+    document.getElementById('modalSubmitBtn').className = action === 'Approved' ? 'btn-primary' : 'btn-danger';
+    document.getElementById('approvalModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('approvalModal').classList.remove('open');
+}
+</script>
+}

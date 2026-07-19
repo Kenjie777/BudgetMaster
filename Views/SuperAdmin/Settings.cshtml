@@ -1,0 +1,65 @@
+@model List<BudgetMasterFinal.Models.SystemSetting>
+@{
+    ViewData["Title"] = "System Settings";
+    ViewData["PageTitle"] = "System Settings";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-gear"></i> Global System Settings</div>
+        </div>
+        <div class="card-body">
+            <table class="dash-table">
+                <thead><tr><th>Group</th><th>Key</th><th>Value</th><th>Description</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td><span class="action-badge">@s.Group</span></td>
+                            <td><code>@s.Key</code></td>
+                            <td id="val_@s.Id">@s.Value</td>
+                            <td>@(s.Description ?? "—")</td>
+                            <td>
+                                <button class="btn-icon" onclick="editSetting(@s.Id, '@s.Value')"><i class="fa-solid fa-pen"></i></button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="settingModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Update Setting</h3>
+            <button class="modal-close" onclick="document.getElementById('settingModal').classList.remove('open')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form action="/SuperAdmin/UpdateSetting" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="settingId" name="id" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Value</label>
+                    <input type="text" id="settingVal" name="value" class="form-input" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function editSetting(id, val) {
+    document.getElementById('settingId').value = id;
+    document.getElementById('settingVal').value = val;
+    document.getElementById('settingModal').classList.add('open');
+}
+</script>
+}

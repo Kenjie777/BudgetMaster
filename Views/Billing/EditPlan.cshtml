@@ -1,0 +1,387 @@
+@model BudgetMasterFinal.Models.SubscriptionPlan
+@{
+    ViewData["Title"] = "Edit Subscription Plan";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="dash-container">
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Edit Subscription Plan</div>
+            <a href="@Url.Action("Plans")" class="btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back to Plans</a>
+        </div>
+        <div class="card-body">
+            <form asp-action="EditPlan" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="Id" type="hidden" />
+                
+                <div class="form-section">
+                    <h3 class="section-title">Plan Details</h3>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label asp-for="Name" class="form-label">Plan Name</label>
+                            <input asp-for="Name" class="form-input" />
+                            <span asp-validation-for="Name" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Status" class="form-label">Status</label>
+                            <select asp-for="Status" class="form-input">
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Description" class="form-label">Description</label>
+                        <textarea asp-for="Description" class="form-input" rows="3"></textarea>
+                        <span asp-validation-for="Description" class="field-error"></span>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">Pricing</h3>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label asp-for="MonthlyPrice" class="form-label">Monthly Price (₱)</label>
+                            <input asp-for="MonthlyPrice" class="form-input" type="number" step="0.01" id="monthlyPrice" />
+                            <span asp-validation-for="MonthlyPrice" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="YearlyDiscountPercentage" class="form-label">Yearly Discount (%)</label>
+                            <input asp-for="YearlyDiscountPercentage" class="form-input" type="number" step="0.01" min="0" max="100" id="yearlyDiscount" />
+                            <small class="form-hint">Discount percentage applied to yearly subscriptions</small>
+                            <span asp-validation-for="YearlyDiscountPercentage" class="field-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Yearly Price (₱) - Auto-calculated</label>
+                        <input type="text" class="form-input form-input-readonly" id="yearlyPriceDisplay" readonly disabled />
+                        <input type="hidden" asp-for="YearlyPrice" id="yearlyPrice" />
+                        <small class="form-hint" id="yearlyPriceBreakdown">Calculated automatically based on monthly price and discount</small>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label asp-for="BillingModel" class="form-label">Billing Model</label>
+                            <select asp-for="BillingModel" class="form-input">
+                                <option value="Subscription">Subscription</option>
+                                <option value="Usage">Usage-Based</option>
+                                <option value="Hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="SortOrder" class="form-label">Sort Order</label>
+                            <input asp-for="SortOrder" class="form-input" type="number" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">Limits</h3>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label asp-for="MaxUsers" class="form-label">Max Users (-1 for unlimited)</label>
+                            <input asp-for="MaxUsers" class="form-input" type="number" />
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="MaxDepartments" class="form-label">Max Departments</label>
+                            <input asp-for="MaxDepartments" class="form-input" type="number" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title">Features</h3>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input asp-for="IncludesForecasting" type="checkbox" class="form-checkbox" />
+                                <span class="checkbox-custom"></span>
+                                Forecasting
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input asp-for="IncludesScenarioPlanning" type="checkbox" class="form-checkbox" />
+                                <span class="checkbox-custom"></span>
+                                Scenario Planning
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input asp-for="IncludesAdvancedReports" type="checkbox" class="form-checkbox" />
+                                <span class="checkbox-custom"></span>
+                                Advanced Reports
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input asp-for="IncludesApiAccess" type="checkbox" class="form-checkbox" />
+                                <span class="checkbox-custom"></span>
+                                API Access
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input asp-for="IncludesCustomBranding" type="checkbox" class="form-checkbox" />
+                                <span class="checkbox-custom"></span>
+                                Custom Branding
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input asp-for="IncludesPrioritySupport" type="checkbox" class="form-checkbox" />
+                                <span class="checkbox-custom"></span>
+                                Priority Support
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="checkbox-label">
+                            <input asp-for="IsVisible" type="checkbox" class="form-checkbox" />
+                            <span class="checkbox-custom"></span>
+                            Visible to customers
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary"><i class="fa-solid fa-save"></i> Update Plan</button>
+                    <a href="@Url.Action("Plans")" class="btn-secondary"><i class="fa-solid fa-times"></i> Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.form-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.form-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.form-input-readonly {
+    background: #f3f4f6 !important;
+    cursor: not-allowed !important;
+    color: #6b7280 !important;
+}
+
+textarea.form-input {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #374151;
+    user-select: none;
+}
+
+.form-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkbox-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    display: inline-block;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.form-checkbox:checked + .checkbox-custom {
+    background: #1e3a5f;
+    border-color: #1e3a5f;
+}
+
+.form-checkbox:checked + .checkbox-custom::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.field-error {
+    display: block;
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #1e3a5f;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #152d4a;
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+@@media (max-width: 1024px) {
+    .form-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@@media (max-width: 768px) {
+    .form-grid-2, .form-grid-3, .form-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+    // Auto-calculate yearly price when monthly price or discount changes
+    function calculateYearlyPrice() {
+        const monthlyPrice = parseFloat(document.getElementById('monthlyPrice').value) || 0;
+        const discountPercentage = parseFloat(document.getElementById('yearlyDiscount').value) || 0;
+        
+        const baseYearlyPrice = monthlyPrice * 12;
+        const discountAmount = baseYearlyPrice * (discountPercentage / 100);
+        const finalYearlyPrice = baseYearlyPrice - discountAmount;
+        
+        // Update both the display field and hidden field
+        document.getElementById('yearlyPriceDisplay').value = finalYearlyPrice.toFixed(2);
+        document.getElementById('yearlyPrice').value = finalYearlyPrice.toFixed(2);
+        
+        // Update breakdown text
+        const breakdown = document.getElementById('yearlyPriceBreakdown');
+        if (monthlyPrice > 0) {
+            breakdown.innerHTML = `₱${monthlyPrice.toFixed(2)} × 12 = ₱${baseYearlyPrice.toFixed(2)} − ${discountPercentage}% (₱${discountAmount.toFixed(2)}) = <strong>₱${finalYearlyPrice.toFixed(2)}</strong>`;
+            breakdown.style.color = '#10b981';
+            breakdown.style.fontWeight = '500';
+        } else {
+            breakdown.innerHTML = 'Calculated automatically based on monthly price and discount';
+            breakdown.style.color = '#6b7280';
+            breakdown.style.fontWeight = 'normal';
+        }
+    }
+    
+    // Attach event listeners
+    document.getElementById('monthlyPrice').addEventListener('input', calculateYearlyPrice);
+    document.getElementById('yearlyDiscount').addEventListener('input', calculateYearlyPrice);
+    
+    // Calculate on page load
+    document.addEventListener('DOMContentLoaded', calculateYearlyPrice);
+    </script>
+}

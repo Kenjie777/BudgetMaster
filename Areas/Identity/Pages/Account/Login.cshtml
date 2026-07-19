@@ -1,0 +1,105 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign In";
+    Layout = "_Layout";
+}
+
+<div class="auth-page">
+    <div class="auth-left">
+        <div class="auth-left-content">
+            <div class="auth-brand">
+                <div class="brand-icon-lg"><i class="fa-solid fa-chart-pie"></i></div>
+                <span class="auth-brand-name">BudgetMaster</span>
+            </div>
+            <h2 class="auth-tagline">Smart Financial Planning Starts Here</h2>
+            <p class="auth-desc">Manage budgets, forecast performance, and analyze variances — all in one powerful platform.</p>
+            <div class="auth-features">
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Multi-tenant SaaS Architecture</div>
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Role-based Access Control</div>
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Real-time Budget Tracking</div>
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Advanced Financial Forecasting</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-card">
+            <div class="auth-card-header">
+                <div class="auth-welcome-logo">
+                    <img src="~/images/BudgetMasterLogo1.png" alt="BudgetMaster" class="welcome-logo" />
+                </div>
+                <h1 class="auth-title">Welcome back</h1>
+                <p class="auth-subtitle">Sign in to your BudgetMaster account</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="auth-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div asp-validation-summary="ModelOnly"></div>
+                </div>
+            }
+
+            <form id="account" method="post" class="auth-form" id="loginForm">
+                <div class="form-group">
+                    <label asp-for="Input.Email" class="form-label">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input asp-for="Input.Email" type="email" class="form-input" placeholder="you@company.com" id="emailInput" autocomplete="username" />
+                    </div>
+                    <span asp-validation-for="Input.Email" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.Password" class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input asp-for="Input.Password" type="password" class="form-input" placeholder="••••••••" id="passwordInput" autocomplete="current-password" />
+                        <button type="button" class="input-toggle" onclick="togglePassword('passwordInput', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Input.Password" class="field-error"></span>
+                </div>
+
+                <div class="form-row-split">
+                    <label class="checkbox-label">
+                        <input asp-for="Input.RememberMe" type="checkbox" class="form-checkbox" />
+                        <span class="checkbox-custom"></span>
+                        @Html.DisplayNameFor(m => m.Input.RememberMe)
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-auth-primary" id="loginBtn">
+                    <span class="btn-text">Log in</span>
+                    <span class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                </button>
+            </form>
+
+            <p class="auth-switch">Don't have an account? <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create one free</a></p>
+            <p class="auth-back"><a href="/"><i class="fa-solid fa-arrow-left"></i> Back to home</a></p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function togglePassword(id, btn) {
+    const input = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+    }
+}
+document.getElementById('loginForm').addEventListener('submit', function() {
+    document.querySelector('.btn-text').classList.add('hidden');
+    document.querySelector('.btn-loader').classList.remove('hidden');
+});
+</script>
+<partial name="_ValidationScriptsPartial" />
+}

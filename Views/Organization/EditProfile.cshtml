@@ -1,0 +1,94 @@
+@model BudgetMasterFinal.Models.ViewModels.EditOrganizationProfileViewModel
+@{
+    ViewData["Title"] = "Edit Company Profile";
+    ViewData["PageTitle"] = "Edit Company Profile";
+}
+
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="@Url.Action("Profile")" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Profile
+        </a>
+    </div>
+
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-building"></i>
+            <h2>Edit Company Profile</h2>
+            <p>Update your organization's profile information</p>
+        </div>
+        <div class="erp-form">
+            <form asp-action="EditProfile" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                
+                <div class="erp-form-grid">
+                    <div class="form-group">
+                        <label asp-for="CompanyName">Company Name *</label>
+                        <input asp-for="CompanyName" class="form-input" placeholder="Enter company name" />
+                        <span asp-validation-for="CompanyName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Industry">Industry</label>
+                        <select asp-for="Industry" class="form-input form-select">
+                            <option value="">Select Industry</option>
+                            @foreach (var industry in ViewBag.Industries as List<string>)
+                            {
+                                <option value="@industry">@industry</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Industry" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Phone">Phone Number</label>
+                        <input asp-for="Phone" class="form-input" placeholder="Enter phone number" />
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Website">Website</label>
+                        <input asp-for="Website" class="form-input" placeholder="https://www.example.com" />
+                        <span asp-validation-for="Website" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group span-2">
+                        <label asp-for="Address">Address</label>
+                        <textarea asp-for="Address" class="form-input form-textarea" rows="3" placeholder="Enter company address"></textarea>
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CurrencyCode">Currency *</label>
+                        <select asp-for="CurrencyCode" class="form-input form-select">
+                            @foreach (var currency in ViewBag.Currencies as List<(string Code, string Name)>)
+                            {
+                                <option value="@currency.Code">@currency.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CurrencyCode" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="logoFile">Company Logo</label>
+                        <input type="file" id="logoFile" name="logoFile" class="form-input" accept="image/*" />
+                        <small style="color: #64748b; font-size: 0.75rem;">Upload a company logo (JPG, PNG, GIF - Max 2MB)</small>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i> Save Changes
+                    </button>
+                    <a href="@Url.Action("Profile")" class="btn-secondary">
+                        <i class="fa-solid fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

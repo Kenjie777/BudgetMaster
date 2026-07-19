@@ -1,0 +1,523 @@
+@model BudgetMasterFinal.Models.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Create Account";
+    Layout = "_Layout";
+}
+
+<div class="auth-page">
+    <div class="auth-left">
+        <div class="auth-left-content">
+            <div class="auth-brand">
+                <div class="brand-icon-lg"><i class="fa-solid fa-chart-pie"></i></div>
+                <span class="auth-brand-name">BudgetMaster</span>
+            </div>
+            <h2 class="auth-tagline">Start Your 14-Day Free Trial</h2>
+            <p class="auth-desc">No credit card required. Full access to all features. Cancel anytime.</p>
+            <div class="auth-plan-summary" id="planSummary">
+                <div class="plan-sum-badge" id="planBadge">Professional Plan</div>
+                <div class="plan-sum-price" id="planPrice">₱299/month</div>
+                <div class="plan-sum-features">
+                    <span><i class="fa-solid fa-check"></i> 25 Users</span>
+                    <span><i class="fa-solid fa-check"></i> 10 Departments</span>
+                    <span><i class="fa-solid fa-check"></i> Scenario Planning</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-card register-card">
+            <div class="auth-card-header">
+                <h1 class="auth-title">Create your account</h1>
+                <p class="auth-subtitle">Set up your organization in minutes</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="auth-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div asp-validation-summary="ModelOnly"></div>
+                </div>
+            }
+
+            <form asp-action="Register" method="post" class="auth-form" id="registerForm">
+                @Html.AntiForgeryToken()
+
+                <div class="form-section-title">Personal Information</div>
+                <div class="form-row-two">
+                    <div class="form-group">
+                        <label asp-for="FirstName" class="form-label">First Name</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-user input-icon"></i>
+                            <input asp-for="FirstName" class="form-input" placeholder="Juan" />
+                        </div>
+                        <span asp-validation-for="FirstName" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="LastName" class="form-label">Last Name</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-user input-icon"></i>
+                            <input asp-for="LastName" class="form-input" placeholder="Dela Cruz" />
+                        </div>
+                        <span asp-validation-for="LastName" class="field-error"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email" class="form-label">Work Email</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input asp-for="Email" type="email" class="form-input" placeholder="you@company.com" />
+                    </div>
+                    <span asp-validation-for="Email" class="field-error"></span>
+                </div>
+
+                <div class="form-section-title" style="margin-top:1rem">Company Information</div>
+                <div class="form-row-two">
+                    <div class="form-group">
+                        <label asp-for="CompanyName" class="form-label">Company Name</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-building input-icon"></i>
+                            <input asp-for="CompanyName" class="form-input" placeholder="Acme Corp" />
+                        </div>
+                        <span asp-validation-for="CompanyName" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Industry" class="form-label">Industry</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-industry input-icon"></i>
+                            <select asp-for="Industry" class="form-input form-select">
+                                <option value="">Select industry...</option>
+                                <option>Technology</option>
+                                <option>Finance</option>
+                                <option>Healthcare</option>
+                                <option>Manufacturing</option>
+                                <option>Retail</option>
+                                <option>Education</option>
+                                <option>Real Estate</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section-title" style="margin-top:1rem">Subscription Plan</div>
+                <div class="plan-selector">
+                    @if (ViewBag.SubscriptionPlans != null && ((List<BudgetMasterFinal.Models.SubscriptionPlan>)ViewBag.SubscriptionPlans).Any())
+                    {
+                        @foreach (var plan in (List<BudgetMasterFinal.Models.SubscriptionPlan>)ViewBag.SubscriptionPlans)
+                        {
+                            var isSelected = plan.Name == "Professional" || (Model?.PlanName == plan.Name);
+                            var iconClass = plan.Name == "Starter" ? "fa-seedling" : 
+                                          plan.Name == "Professional" ? "fa-rocket" : 
+                                          plan.Name == "Enterprise" ? "fa-crown" : "fa-box";
+                            var iconColorClass = plan.Name == "Starter" ? "starter" : 
+                                               plan.Name == "Professional" ? "pro" : 
+                                               plan.Name == "Enterprise" ? "enterprise" : "starter";
+                            
+                            <label class="plan-option @(isSelected ? "selected" : "")">
+                                <input type="radio" name="PlanName" value="@plan.Name" 
+                                       @(isSelected ? "checked" : "") 
+                                       data-monthly="@plan.MonthlyPrice" 
+                                       data-yearly="@plan.YearlyPrice"
+                                       onchange="updatePlan(this)" />
+                                <div class="plan-opt-content">
+                                    <div class="plan-opt-icon @iconColorClass"><i class="fa-solid @iconClass"></i></div>
+                                    <div>
+                                        <div class="plan-opt-name">@plan.Name</div>
+                                        <div class="plan-opt-price">₱@plan.MonthlyPrice.ToString("N0")/mo</div>
+                                    </div>
+                                    @if (plan.Name == "Professional")
+                                    {
+                                        <div class="plan-opt-badge">Popular</div>
+                                    }
+                                </div>
+                            </label>
+                        }
+                    }
+                    else
+                    {
+                        <!-- Fallback to hardcoded plans if database is empty -->
+                        <label class="plan-option @(Model?.PlanName == "Starter" ? "selected" : "")">
+                            <input type="radio" name="PlanName" value="Starter" @(Model?.PlanName == "Starter" ? "checked" : "") onchange="updatePlan(this)" data-monthly="99" data-yearly="990" />
+                            <div class="plan-opt-content">
+                                <div class="plan-opt-icon starter"><i class="fa-solid fa-seedling"></i></div>
+                                <div>
+                                    <div class="plan-opt-name">Starter</div>
+                                    <div class="plan-opt-price">₱99/mo</div>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="plan-option selected">
+                            <input type="radio" name="PlanName" value="Professional" checked onchange="updatePlan(this)" data-monthly="299" data-yearly="2990" />
+                            <div class="plan-opt-content">
+                                <div class="plan-opt-icon pro"><i class="fa-solid fa-rocket"></i></div>
+                                <div>
+                                    <div class="plan-opt-name">Professional</div>
+                                    <div class="plan-opt-price">₱299/mo</div>
+                                </div>
+                                <div class="plan-opt-badge">Popular</div>
+                            </div>
+                        </label>
+                        <label class="plan-option">
+                            <input type="radio" name="PlanName" value="Enterprise" onchange="updatePlan(this)" data-monthly="999" data-yearly="9990" />
+                            <div class="plan-opt-content">
+                                <div class="plan-opt-icon enterprise"><i class="fa-solid fa-crown"></i></div>
+                                <div>
+                                    <div class="plan-opt-name">Enterprise</div>
+                                    <div class="plan-opt-price">₱999/mo</div>
+                                </div>
+                            </div>
+                        </label>
+                    }
+                </div>
+                <div class="billing-toggle-row">
+                    <span>Monthly</span>
+                    <label class="toggle-switch-sm">
+                        <input type="checkbox" id="regBillingToggle" name="BillingCycle" value="Yearly" onchange="updateBilling(this)">
+                        <span class="toggle-slider-sm"></span>
+                    </label>
+                    <span>Yearly <span class="save-badge-sm">-17%</span></span>
+                </div>
+                <input type="hidden" id="billingCycleHidden" name="BillingCycle" value="Monthly" />
+
+                <div class="form-section-title" style="margin-top:1rem">Security</div>
+                <div class="form-row-two">
+                    <div class="form-group">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock input-icon"></i>
+                            <input asp-for="Password" type="password" class="form-input password-input" placeholder="Min. 12 characters" id="regPassword" />
+                            <button type="button" class="input-toggle" onclick="togglePassword('regPassword', this)" tabindex="-1">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="field-error"></span>
+                        
+                        <!-- Password Strength Meter -->
+                        <div class="password-strength-meter" id="passwordStrengthMeter" style="display: none;">
+                            <div class="strength-bar">
+                                <div class="strength-bar-fill" id="strengthBarFill"></div>
+                            </div>
+                            <div class="strength-text" id="strengthText">Password strength</div>
+                        </div>
+                        
+                        <!-- Password Requirements -->
+                        <div class="password-requirements" id="passwordRequirements">
+                            <div class="req-item" id="req-length">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                <span>At least 12 characters</span>
+                            </div>
+                            <div class="req-item" id="req-uppercase">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                <span>One uppercase letter</span>
+                            </div>
+                            <div class="req-item" id="req-lowercase">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                <span>One lowercase letter</span>
+                            </div>
+                            <div class="req-item" id="req-number">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                <span>One number</span>
+                            </div>
+                            <div class="req-item" id="req-special">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                <span>One special character (!@@#$%^&*)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock input-icon"></i>
+                            <input asp-for="ConfirmPassword" type="password" class="form-input" placeholder="Repeat password" id="regConfirm" />
+                            <button type="button" class="input-toggle" onclick="togglePassword('regConfirm', this)" tabindex="-1">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+                        <div class="password-match" id="passwordMatch" style="display: none;">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Passwords match</span>
+                        </div>
+                        <div class="password-mismatch" id="passwordMismatch" style="display: none;">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            <span>Passwords do not match</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-auth-primary" id="registerBtn">
+                    <span class="btn-text"><i class="fa-solid fa-rocket"></i> Create Account & Start Trial</span>
+                    <span class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                </button>
+
+                <p class="terms-note">By creating an account, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+            </form>
+
+            <p class="auth-switch">Already have an account? <a href="/Account/Login">Sign in</a></p>
+            <p class="auth-back"><a href="/"><i class="fa-solid fa-arrow-left"></i> Back to home</a></p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// ══════════════════════════════════════════════════════════════════════════════════════
+// PASSWORD VISIBILITY TOGGLE
+// ══════════════════════════════════════════════════════════════════════════════════════
+function togglePassword(id, btn) {
+    console.log('togglePassword called for:', id);
+    const input = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    
+    if (!input) {
+        console.error('Input not found:', id);
+        return;
+    }
+    
+    if (!icon) {
+        console.error('Icon not found in button');
+        return;
+    }
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        console.log('Password shown');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        console.log('Password hidden');
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// PASSWORD STRENGTH VALIDATION
+// ══════════════════════════════════════════════════════════════════════════════════════
+const passwordInput = document.getElementById('regPassword');
+const confirmInput = document.getElementById('regConfirm');
+const strengthMeter = document.getElementById('passwordStrengthMeter');
+const strengthBarFill = document.getElementById('strengthBarFill');
+const strengthText = document.getElementById('strengthText');
+const requirements = document.getElementById('passwordRequirements');
+
+// Password requirements
+const reqLength = document.getElementById('req-length');
+const reqUppercase = document.getElementById('req-uppercase');
+const reqLowercase = document.getElementById('req-lowercase');
+const reqNumber = document.getElementById('req-number');
+const reqSpecial = document.getElementById('req-special');
+
+// Password match indicators
+const passwordMatch = document.getElementById('passwordMatch');
+const passwordMismatch = document.getElementById('passwordMismatch');
+
+passwordInput.addEventListener('input', function() {
+    const password = this.value;
+    
+    if (password.length === 0) {
+        strengthMeter.style.display = 'none';
+        requirements.style.display = 'none';
+        return;
+    }
+    
+    strengthMeter.style.display = 'block';
+    requirements.style.display = 'block';
+    
+    // Check requirements
+    const hasLength = password.length >= 12;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    // Update requirement indicators
+    updateRequirement(reqLength, hasLength);
+    updateRequirement(reqUppercase, hasUppercase);
+    updateRequirement(reqLowercase, hasLowercase);
+    updateRequirement(reqNumber, hasNumber);
+    updateRequirement(reqSpecial, hasSpecial);
+    
+    // Calculate strength
+    let strength = 0;
+    if (hasLength) strength++;
+    if (hasUppercase) strength++;
+    if (hasLowercase) strength++;
+    if (hasNumber) strength++;
+    if (hasSpecial) strength++;
+    
+    // Update strength meter
+    updateStrengthMeter(strength);
+    
+    // Check password match
+    checkPasswordMatch();
+});
+
+confirmInput.addEventListener('input', checkPasswordMatch);
+
+function updateRequirement(element, isValid) {
+    const icon = element.querySelector('i');
+    if (isValid) {
+        element.classList.add('valid');
+        element.classList.remove('invalid');
+        icon.classList.remove('fa-circle-xmark');
+        icon.classList.add('fa-circle-check');
+    } else {
+        element.classList.add('invalid');
+        element.classList.remove('valid');
+        icon.classList.remove('fa-circle-check');
+        icon.classList.add('fa-circle-xmark');
+    }
+}
+
+function updateStrengthMeter(strength) {
+    const percentage = (strength / 5) * 100;
+    strengthBarFill.style.width = percentage + '%';
+    
+    // Remove all strength classes
+    strengthBarFill.classList.remove('strength-weak', 'strength-fair', 'strength-good', 'strength-strong');
+    
+    if (strength <= 2) {
+        strengthBarFill.classList.add('strength-weak');
+        strengthText.textContent = 'Weak password';
+        strengthText.style.color = '#ef4444';
+    } else if (strength === 3) {
+        strengthBarFill.classList.add('strength-fair');
+        strengthText.textContent = 'Fair password';
+        strengthText.style.color = '#f59e0b';
+    } else if (strength === 4) {
+        strengthBarFill.classList.add('strength-good');
+        strengthText.textContent = 'Good password';
+        strengthText.style.color = '#3b82f6';
+    } else {
+        strengthBarFill.classList.add('strength-strong');
+        strengthText.textContent = 'Strong password';
+        strengthText.style.color = '#10b981';
+    }
+}
+
+function checkPasswordMatch() {
+    const password = passwordInput.value;
+    const confirm = confirmInput.value;
+    
+    if (confirm.length === 0) {
+        passwordMatch.style.display = 'none';
+        passwordMismatch.style.display = 'none';
+        return;
+    }
+    
+    if (password === confirm && password.length > 0) {
+        passwordMatch.style.display = 'flex';
+        passwordMismatch.style.display = 'none';
+    } else {
+        passwordMatch.style.display = 'none';
+        passwordMismatch.style.display = 'flex';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// FORM VALIDATION
+// ══════════════════════════════════════════════════════════════════════════════════════
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = passwordInput.value;
+    
+    // Validate password requirements
+    const hasLength = password.length >= 12;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    if (!hasLength || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+        e.preventDefault();
+        alert('Please ensure your password meets all requirements:\n- At least 12 characters\n- One uppercase letter\n- One lowercase letter\n- One number\n- One special character');
+        return false;
+    }
+    
+    // Check password match
+    if (password !== confirmInput.value) {
+        e.preventDefault();
+        alert('Passwords do not match. Please check and try again.');
+        return false;
+    }
+    
+    // Show loading state
+    document.querySelector('#registerBtn .btn-text').classList.add('hidden');
+    document.querySelector('#registerBtn .btn-loader').classList.remove('hidden');
+});
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// PLAN SELECTION
+// ══════════════════════════════════════════════════════════════════════════════════════
+function updatePlan(radio) {
+    document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected'));
+    radio.closest('.plan-option').classList.add('selected');
+    
+    // Get prices from data attributes
+    const monthlyPrice = parseFloat(radio.getAttribute('data-monthly')) || 0;
+    const yearlyPrice = parseFloat(radio.getAttribute('data-yearly')) || 0;
+    
+    const isYearly = document.getElementById('regBillingToggle').checked;
+    const price = isYearly ? yearlyPrice : monthlyPrice;
+    const cycle = isYearly ? '/year' : '/month';
+    
+    // Format price with thousands separator
+    const formattedPrice = '₱' + price.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    
+    document.getElementById('planBadge').textContent = radio.value + ' Plan';
+    document.getElementById('planPrice').textContent = formattedPrice + cycle;
+}
+
+function updateBilling(cb) {
+    document.getElementById('billingCycleHidden').value = cb.checked ? 'Yearly' : 'Monthly';
+    updatePlan(document.querySelector('input[name="PlanName"]:checked'));
+}
+
+// Pre-fill plan from URL
+const urlParams = new URLSearchParams(window.location.search);
+const planParam = urlParams.get('plan');
+if (planParam) {
+    const radio = document.querySelector(`input[name="PlanName"][value="${planParam}"]`);
+    if (radio) { radio.checked = true; updatePlan(radio); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// ALTERNATIVE: Add event listeners for password toggle buttons (backup method)
+// ══════════════════════════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up password toggles');
+    
+    // Find all toggle buttons
+    const toggleButtons = document.querySelectorAll('.input-toggle');
+    console.log('Found toggle buttons:', toggleButtons.length);
+    
+    toggleButtons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Toggle button clicked via event listener');
+            
+            // Find the input field (previous sibling)
+            const wrapper = button.closest('.input-wrapper');
+            const input = wrapper.querySelector('input[type="password"], input[type="text"]');
+            const icon = button.querySelector('i');
+            
+            if (input && icon) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        });
+    });
+});
+</script>
+}

@@ -1,0 +1,61 @@
+@model List<BudgetMasterFinal.Models.Department>
+@{
+    ViewData["Title"] = "Departments";
+    ViewData["PageTitle"] = "Department Management";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="/Department/Create" class="btn-primary"><i class="fa-solid fa-plus"></i> Add Department</a>
+    </div>
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-sitemap"></i> Departments</div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="dept-grid">
+                    @foreach (var d in Model)
+                    {
+                        <div class="dept-card @(!d.IsActive ? "dept-inactive" : "")">
+                            <div class="dept-card-icon"><i class="fa-solid fa-building"></i></div>
+                            <h3 class="dept-name">@d.Name</h3>
+                            @if (d.HeadOfDepartment != null)
+                            {
+                                <div class="dept-head"><i class="fa-solid fa-user-tie"></i> @d.HeadOfDepartment</div>
+                            }
+                            @if (d.Description != null)
+                            {
+                                <p class="dept-desc">@d.Description</p>
+                            }
+                            @if (d.BudgetAllocation.HasValue)
+                            {
+                                <div class="dept-budget">Budget: ₱@d.BudgetAllocation.Value.ToString("N0")</div>
+                            }
+                            <div class="dept-status">
+                                <span class="status-badge @(d.IsActive ? "status-active" : "status-closed")">@(d.IsActive ? "Active" : "Inactive")</span>
+                            </div>
+                            <div class="dept-actions">
+                                <a href="/Department/Edit/@d.Id" class="btn-icon-sm"><i class="fa-solid fa-pen"></i></a>
+                                <form action="/Department/Archive/@d.Id" method="post" style="display:inline" onsubmit="return confirm('Archive this department? You can restore it later from the Archive page.')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-icon-sm warning"><i class="fa-solid fa-box-archive"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state large">
+                    <i class="fa-solid fa-sitemap"></i>
+                    <h3>No departments yet</h3>
+                    <a href="/Department/Create" class="btn-primary">Add Department</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

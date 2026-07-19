@@ -1,0 +1,319 @@
+@model BudgetMasterFinal.Models.ViewModels.OrganizationSettingsViewModel
+@{
+    ViewData["Title"] = "Organization Settings";
+    ViewData["PageTitle"] = "Organization Settings";
+}
+
+<div class="dash-container">
+    <form>
+        @Html.AntiForgeryToken()
+    </form>
+    
+    @foreach (var group in Model.Settings)
+    {
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-cog"></i>
+                    @group.Key Settings
+                </div>
+            </div>
+            <div class="card-body">
+                @foreach (var setting in group.Value)
+                {
+                    <div class="setting-row" data-setting-id="@setting.Id">
+                        <div class="setting-info">
+                            <div class="setting-name">@setting.Key</div>
+                            <div class="setting-description">@(setting.Description ?? "No description available")</div>
+                        </div>
+                        <div class="setting-control">
+                            @if (setting.Key.Contains("Enable") || setting.Key.Contains("Allow") || setting.Key.Contains("Require") || setting.Key.Contains("Notify"))
+                            {
+                                <label class="toggle-switch">
+                                    <input type="checkbox" 
+                                           class="setting-toggle" 
+                                           data-key="@setting.Key" 
+                                           data-group="@setting.Group"
+                                           @(setting.Value?.ToLower() == "true" ? "checked" : "") />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            }
+                            else if (setting.Key.Contains("Frequency") || setting.Key.Contains("Workflow") || setting.Key.Contains("Cycle"))
+                            {
+                                <select class="form-input-sm" data-key="@setting.Key" data-group="@setting.Group">
+                                    @if (setting.Key.Contains("Frequency"))
+                                    {
+                                        @if (setting.Value == "Daily")
+                                        {
+                                            <option value="Daily" selected>Daily</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Daily">Daily</option>
+                                        }
+                                        @if (setting.Value == "Weekly")
+                                        {
+                                            <option value="Weekly" selected>Weekly</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Weekly">Weekly</option>
+                                        }
+                                        @if (setting.Value == "Monthly")
+                                        {
+                                            <option value="Monthly" selected>Monthly</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Monthly">Monthly</option>
+                                        }
+                                    }
+                                    else if (setting.Key.Contains("Workflow"))
+                                    {
+                                        @if (setting.Value == "Standard")
+                                        {
+                                            <option value="Standard" selected>Standard</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Standard">Standard</option>
+                                        }
+                                        @if (setting.Value == "Advanced")
+                                        {
+                                            <option value="Advanced" selected>Advanced</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Advanced">Advanced</option>
+                                        }
+                                        @if (setting.Value == "Custom")
+                                        {
+                                            <option value="Custom" selected>Custom</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Custom">Custom</option>
+                                        }
+                                    }
+                                    else if (setting.Key.Contains("Cycle"))
+                                    {
+                                        @if (setting.Value == "Monthly")
+                                        {
+                                            <option value="Monthly" selected>Monthly</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Monthly">Monthly</option>
+                                        }
+                                        @if (setting.Value == "Quarterly")
+                                        {
+                                            <option value="Quarterly" selected>Quarterly</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Quarterly">Quarterly</option>
+                                        }
+                                        @if (setting.Value == "Annual")
+                                        {
+                                            <option value="Annual" selected>Annual</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="Annual">Annual</option>
+                                        }
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                <input type="text" 
+                                       class="form-input-sm" 
+                                       data-key="@setting.Key" 
+                                       data-group="@setting.Group"
+                                       value="@setting.Value" 
+                                       placeholder="Enter value" />
+                            }
+                            <button type="button" class="btn-icon" data-key="@setting.Key" data-group="@setting.Group">
+                                <i class="fa-solid fa-save"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+.setting-row:last-child {
+    border-bottom: none;
+}
+
+.setting-row:hover {
+    background: #f8fafc;
+}
+
+.setting-info {
+    flex: 1;
+    margin-right: 1rem;
+}
+
+.setting-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.setting-description {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.setting-control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #6366f1;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+</style>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle setting updates
+    document.querySelectorAll('.btn-icon').forEach(button => {
+        button.addEventListener('click', function() {
+            const key = this.dataset.key;
+            const group = this.dataset.group;
+            const settingRow = this.closest('.setting-row');
+            
+            let value;
+            const toggle = settingRow.querySelector('.setting-toggle');
+            const input = settingRow.querySelector('.form-input-sm[data-key="' + key + '"]');
+            
+            if (toggle) {
+                value = toggle.checked.toString();
+            } else if (input) {
+                value = input.value;
+            }
+            
+            // Show loading state
+            const originalIcon = this.innerHTML;
+            this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            this.disabled = true;
+            
+            // Send update request
+            fetch('@Url.Action("UpdateSetting")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: new URLSearchParams({
+                    tenantId: @Model.TenantId,
+                    key: key,
+                    value: value,
+                    group: group
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success feedback
+                    this.innerHTML = '<i class="fa-solid fa-check"></i>';
+                    this.style.background = '#10b981';
+                    this.style.color = 'white';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = originalIcon;
+                        this.style.background = '';
+                        this.style.color = '';
+                        this.disabled = false;
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Update failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating setting:', error);
+                this.innerHTML = '<i class="fa-solid fa-exclamation-triangle"></i>';
+                this.style.background = '#ef4444';
+                this.style.color = 'white';
+                
+                setTimeout(() => {
+                    this.innerHTML = originalIcon;
+                    this.style.background = '';
+                    this.style.color = '';
+                    this.disabled = false;
+                }, 2000);
+            });
+        });
+    });
+    
+    // Auto-save for toggles
+    document.querySelectorAll('.setting-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function() {
+            const saveButton = this.closest('.setting-row').querySelector('.btn-icon');
+            if (saveButton) {
+                saveButton.click();
+            }
+        });
+    });
+});
+</script>
+}

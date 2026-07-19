@@ -1,0 +1,37 @@
+@model List<BudgetMasterFinal.Models.Subscription>
+@{
+    ViewData["Title"] = "Subscriptions";
+    ViewData["PageTitle"] = "Subscription Management";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-credit-card"></i> All Subscriptions</div>
+        </div>
+        <div class="card-body">
+            <table class="dash-table">
+                <thead>
+                    <tr><th>Company</th><th>Plan</th><th>Billing</th><th>Price</th><th>Start</th><th>End</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td><strong>@s.Tenant.CompanyName</strong></td>
+                            <td>@s.SubscriptionPlan.Name</td>
+                            <td>@s.BillingCycle</td>
+                            <td>₱@s.PriceAmount.ToString("N0")</td>
+                            <td>@s.StartDate.ToString("MMM dd, yyyy")</td>
+                            <td class="@(s.EndDate < DateTime.UtcNow ? "text-red" : (s.EndDate - DateTime.UtcNow).Days <= 30 ? "text-orange" : "")">
+                                @s.EndDate.ToString("MMM dd, yyyy")
+                            </td>
+                            <td><span class="status-badge status-@s.Status.ToLower()">@s.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

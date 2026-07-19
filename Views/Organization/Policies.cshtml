@@ -1,0 +1,226 @@
+@model BudgetMasterFinal.Models.ViewModels.OrganizationPoliciesViewModel
+@{
+    ViewData["Title"] = "Organization Policies";
+    ViewData["PageTitle"] = "Organization Policies";
+}
+
+<div class="dash-container">
+    <form asp-action="UpdatePolicies" method="post">
+        @Html.AntiForgeryToken()
+        
+        <div class="dash-row">
+            <!-- Budget Approval Policies -->
+            <div class="dash-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-check-circle"></i>
+                        Budget Approval Policies
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="erp-form-grid">
+                        <div class="form-group span-2">
+                            <label asp-for="AutoApprovalLimit">Auto-Approval Limit</label>
+                            <div style="position: relative;">
+                                <span style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 500; z-index: 1;">₱</span>
+                                <input asp-for="AutoApprovalLimit" class="form-input" type="number" step="0.01" min="0" style="padding-left: 2.5rem;" />
+                            </div>
+                            <small style="color: #64748b; font-size: 0.75rem;">Budget requests below this amount will be automatically approved</small>
+                            <span asp-validation-for="AutoApprovalLimit" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input asp-for="RequireJustification" type="checkbox" class="checkbox-input" />
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-text">Require Justification for Budget Requests</span>
+                                </label>
+                                <small style="color: #64748b; font-size: 0.75rem;">Users must provide justification when submitting budget requests</small>
+                            </div>
+                            <span asp-validation-for="RequireJustification" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input asp-for="AllowBudgetOverrun" type="checkbox" class="checkbox-input" />
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-text">Allow Budget Overrun</span>
+                                </label>
+                                <small style="color: #64748b; font-size: 0.75rem;">Permit spending beyond allocated budget limits</small>
+                            </div>
+                            <span asp-validation-for="AllowBudgetOverrun" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Policies -->
+            <div class="dash-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-bell"></i>
+                        Notification Policies
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="erp-form-grid">
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input asp-for="NotifyOnVariance" type="checkbox" class="checkbox-input" />
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-text">Notify on Budget Variance</span>
+                                </label>
+                                <small style="color: #64748b; font-size: 0.75rem;">Send notifications when budget variance exceeds threshold</small>
+                            </div>
+                            <span asp-validation-for="NotifyOnVariance" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="VarianceThreshold">Variance Notification Threshold</label>
+                            <div style="position: relative;">
+                                <input asp-for="VarianceThreshold" class="form-input" type="number" step="0.1" min="0" max="100" style="padding-right: 3rem;" />
+                                <span style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 500; z-index: 1;">%</span>
+                            </div>
+                            <small style="color: #64748b; font-size: 0.75rem;">Trigger notifications when variance exceeds this percentage</small>
+                            <span asp-validation-for="VarianceThreshold" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management Policies -->
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-database"></i>
+                    Data Management Policies
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="erp-form-grid">
+                    <div class="form-group">
+                        <label asp-for="DataRetentionMonths">Data Retention Period</label>
+                        <div style="position: relative;">
+                            <input asp-for="DataRetentionMonths" class="form-input" type="number" min="1" max="120" style="padding-right: 5rem;" />
+                            <span style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 500; z-index: 1;">months</span>
+                        </div>
+                        <small style="color: #64748b; font-size: 0.75rem;">How long to retain historical data (1-120 months)</small>
+                        <span asp-validation-for="DataRetentionMonths" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="BackupFrequency">Backup Frequency</label>
+                        <select asp-for="BackupFrequency" class="form-input form-select">
+                            <option value="Daily">Daily</option>
+                            <option value="Weekly">Weekly</option>
+                            <option value="Monthly">Monthly</option>
+                        </select>
+                        <small style="color: #64748b; font-size: 0.75rem;">How often to perform data backups</small>
+                        <span asp-validation-for="BackupFrequency" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-save"></i> Save Policies
+            </button>
+            <button type="button" class="btn-secondary" onclick="resetForm()">
+                <i class="fa-solid fa-undo"></i> Reset to Defaults
+            </button>
+        </div>
+    </form>
+</div>
+
+<style>
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.checkbox-input {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 0.25rem;
+    background-color: white;
+    position: relative;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.checkbox-input:checked + .checkbox-custom {
+    background-color: #6366f1;
+    border-color: #6366f1;
+}
+
+.checkbox-input:checked + .checkbox-custom::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-text {
+    font-weight: 500;
+    color: #1e293b;
+    line-height: 1.4;
+}
+</style>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+    function resetForm() {
+        if (confirm('Are you sure you want to reset all policies to default values? This action cannot be undone.')) {
+            // Reset to default values
+            document.querySelector('input[name="AutoApprovalLimit"]').value = '0';
+            document.querySelector('input[name="RequireJustification"]').checked = true;
+            document.querySelector('input[name="AllowBudgetOverrun"]').checked = false;
+            document.querySelector('input[name="NotifyOnVariance"]').checked = true;
+            document.querySelector('input[name="VarianceThreshold"]').value = '10';
+            document.querySelector('input[name="DataRetentionMonths"]').value = '60';
+            document.querySelector('select[name="BackupFrequency"]').value = 'Daily';
+        }
+    }
+    
+    // Auto-enable/disable variance threshold based on notification setting
+    document.addEventListener('DOMContentLoaded', function() {
+        const notifyCheckbox = document.querySelector('input[name="NotifyOnVariance"]');
+        const thresholdInput = document.querySelector('input[name="VarianceThreshold"]');
+        
+        function toggleThreshold() {
+            thresholdInput.disabled = !notifyCheckbox.checked;
+            thresholdInput.style.opacity = notifyCheckbox.checked ? '1' : '0.5';
+        }
+        
+        notifyCheckbox.addEventListener('change', toggleThreshold);
+        toggleThreshold(); // Initial state
+    });
+    </script>
+}

@@ -1,0 +1,121 @@
+@model BudgetMasterFinal.Models.Forecast
+@{
+    ViewData["Title"] = "New Forecast";
+    ViewData["PageTitle"] = "Create Forecast";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-chart-line"></i>
+            <h2>New Financial Forecast</h2>
+            <p>Connected financial planning engine - expenses and growth rates are automatically calculated from budget data.</p>
+        </div>
+        <form asp-action="Create" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            
+            <div class="form-section-header">
+                <i class="fa-solid fa-keyboard"></i>
+                <h3>Manual Input Fields</h3>
+                <p>Enter your forecast parameters and revenue projections</p>
+            </div>
+            
+            <div class="erp-form-grid">
+                <div class="form-group span-2">
+                    <label class="form-label">Forecast Title <span class="required">*</span></label>
+                    <input asp-for="Title" class="form-input" placeholder="e.g. FY2025 Revenue Forecast" required />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Fiscal Year <span class="required">*</span></label>
+                    <input asp-for="FiscalYear" type="number" class="form-input" value="@DateTime.Now.Year" required />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Forecast Period <span class="required">*</span></label>
+                    <select asp-for="Period" class="form-input form-select" required>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Annual" selected>Annual</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Forecast Method <span class="required">*</span></label>
+                    <select asp-for="ForecastMethod" class="form-input form-select" required>
+                        <option value="Linear" selected>Linear (Allocated + Requests)</option>
+                        <option value="Exponential">Exponential (With Growth Factor)</option>
+                        <option value="MovingAverage">Moving Average</option>
+                    </select>
+                    <small class="form-hint">Method affects how projected expenses are calculated from budget data</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" class="form-input form-select">
+                        <option value="Draft" selected>Draft</option>
+                        <option value="Published">Published</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Projected Revenue (₱) <span class="required">*</span></label>
+                    <input asp-for="ProjectedRevenue" type="number" class="form-input" step="0.01" min="0" placeholder="0.00" required />
+                    <small class="form-hint">Manual input - your revenue projection</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Confidence Percentage (%)</label>
+                    <input asp-for="ConfidencePercent" type="number" class="form-input" step="0.01" min="0" max="100" value="80" />
+                    <small class="form-hint">Your confidence level in this forecast (0-100%)</small>
+                </div>
+                
+                <div class="form-group span-2">
+                    <label class="form-label">Description</label>
+                    <textarea asp-for="Description" class="form-input form-textarea" rows="3" placeholder="Optional notes about this forecast..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="/Forecast/Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-chart-line"></i> Create Forecast
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .form-section-header {
+        margin: 2rem 0 1rem 0;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .form-section-header i {
+        color: var(--primary);
+        margin-right: 0.5rem;
+    }
+    
+    .form-section-header h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0.25rem 0;
+    }
+    
+    .form-section-header p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+    
+    .form-hint {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+</style>

@@ -1,0 +1,70 @@
+@model List<BudgetMasterFinal.Models.Forecast>
+@{
+    ViewData["Title"] = "Financial Forecasting";
+    ViewData["PageTitle"] = "Financial Forecasting";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="/Forecast/Create" class="btn-primary"><i class="fa-solid fa-plus"></i> New Forecast</a>
+    </div>
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-chart-line"></i> Forecasts</div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="forecast-grid">
+                    @foreach (var f in Model)
+                    {
+                        var net = f.ProjectedRevenue - f.ProjectedExpenses;
+                        <div class="forecast-card">
+                            <div class="fc-header">
+                                <div class="fc-method"><span>@f.ForecastMethod</span></div>
+                                <span class="status-badge status-@f.Status.ToLower()">@f.Status</span>
+                            </div>
+                            <h3 class="fc-title">@f.Title</h3>
+                            <div class="fc-period">FY @f.FiscalYear • @f.Period</div>
+                            <div class="fc-metrics">
+                                <div class="fc-metric green">
+                                    <div class="fcm-label">Revenue</div>
+                                    <div class="fcm-value">₱@f.ProjectedRevenue.ToString("N0")</div>
+                                </div>
+                                <div class="fc-metric red">
+                                    <div class="fcm-label">Expenses</div>
+                                    <div class="fcm-value">₱@f.ProjectedExpenses.ToString("N0")</div>
+                                </div>
+                                <div class="fc-metric @(net >= 0 ? "blue" : "orange")">
+                                    <div class="fcm-label">Net Income</div>
+                                    <div class="fcm-value">₱@net.ToString("N0")</div>
+                                </div>
+                            </div>
+                            <div class="fc-indicators">
+                                <div class="fc-ind"><i class="fa-solid fa-arrow-trend-up"></i> @f.GrowthRatePercent.ToString("F1")% growth</div>
+                                <div class="fc-ind"><i class="fa-solid fa-bullseye"></i> @f.ConfidencePercent.ToString("F0")% confidence</div>
+                            </div>
+                            <div class="fc-actions">
+                                <a href="/Forecast/Edit/@f.Id" class="btn-icon-sm"><i class="fa-solid fa-pen"></i></a>
+                                <form action="/Forecast/Delete/@f.Id" method="post" style="display:inline" onsubmit="return confirm('Delete forecast?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-icon-sm danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state large">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <h3>No forecasts yet</h3>
+                    <p>Create your first financial forecast.</p>
+                    <a href="/Forecast/Create" class="btn-primary">Create Forecast</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

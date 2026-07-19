@@ -1,0 +1,127 @@
+@model BudgetMasterFinal.Models.ViewModels.SuperAdminDashboardViewModel
+@{
+    ViewData["Title"] = "Super Admin Dashboard";
+    ViewData["PageTitle"] = "System Overview";
+    Layout = "_DashboardLayout";
+    
+    // SuperAdmin sees PHP by default since they manage multiple tenants
+    var currency = "₱";
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-building"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Companies</div>
+                <div class="kpi-value">@Model.TotalTenants</div>
+                <div class="kpi-sub">@Model.ActiveTenants active tenants</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Users</div>
+                <div class="kpi-value">@Model.TotalUsers</div>
+                <div class="kpi-sub">Across all tenants</div>
+            </div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-credit-card"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Active Subscriptions</div>
+                <div class="kpi-value">@Model.ActiveSubscriptions</div>
+                <div class="kpi-sub">Paying customers</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-peso-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Monthly Revenue</div>
+                <div class="kpi-value">@currency@Model.TotalMonthlyRevenue.ToString("N0")</div>
+                <div class="kpi-sub">MRR estimate</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-building"></i> Recent Companies</div>
+                <a href="/SuperAdmin/Tenants" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                    <i class="fa-solid fa-list"></i> View All
+                </a>
+            </div>
+            <div class="card-body">
+                <table class="dash-table">
+                    <thead><tr><th>Company</th><th>Industry</th><th>Plan</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var t in Model.RecentTenants)
+                        {
+                            <tr>
+                                <td><strong>@t.CompanyName</strong></td>
+                                <td>@(t.Industry ?? "—")</td>
+                                <td>@(t.Subscription?.SubscriptionPlan?.Name ?? "—")</td>
+                                <td><span class="status-badge @(t.IsActive ? "status-active" : "status-closed")">@(t.IsActive ? "Active" : "Inactive")</span></td>
+                                <td><a href="/SuperAdmin/Tenants" class="tbl-link">Manage</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Expiring Subscriptions</div>
+                <a href="/SuperAdmin/Subscriptions" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                    <i class="fa-solid fa-list"></i> View All
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.ExpiringSubscriptions.Any())
+                {
+                    @foreach (var sub in Model.ExpiringSubscriptions)
+                    {
+                        var daysLeft = (sub.EndDate - DateTime.UtcNow).Days;
+                        <div class="expiry-item">
+                            <div class="exp-company">@sub.Tenant.CompanyName</div>
+                            <div class="exp-plan">@sub.SubscriptionPlan.Name</div>
+                            <div class="exp-days @(daysLeft <= 7 ? "exp-critical" : "exp-warn")">@daysLeft days left</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state"><i class="fa-solid fa-check-circle"></i><p>No expiring subscriptions</p></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-scroll"></i> Recent Audit Logs</div>
+            <a href="/SuperAdmin/AuditLogs" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                <i class="fa-solid fa-list"></i> View All
+            </a>
+        </div>
+        <div class="card-body">
+            <table class="dash-table">
+                <thead><tr><th>User</th><th>Action</th><th>Entity</th><th>IP</th><th>Time</th></tr></thead>
+                <tbody>
+                    @foreach (var log in Model.RecentLogs)
+                    {
+                        <tr>
+                            <td>@(log.User?.FullName ?? "System")</td>
+                            <td><span class="action-badge">@log.Action</span></td>
+                            <td>@log.EntityType</td>
+                            <td>@(log.IpAddress ?? "—")</td>
+                            <td>@log.Timestamp.ToString("MMM dd, HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

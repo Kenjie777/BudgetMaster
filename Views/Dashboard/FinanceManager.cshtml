@@ -1,0 +1,169 @@
+@model BudgetMasterFinal.Models.ViewModels.FinanceManagerDashboardViewModel
+@{
+    ViewData["Title"] = "Finance Manager Dashboard";
+    ViewData["PageTitle"] = "Financial Overview";
+    Layout = "_DashboardLayout";
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-wallet"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Allocated</div>
+                <div class="kpi-value">@currency@Model.TotalAllocated.ToString("N0")</div>
+                <div class="kpi-sub">@Model.ActiveBudgets active budgets</div>
+            </div>
+            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-coins"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Used</div>
+                <div class="kpi-value">@currency@Model.TotalUsed.ToString("N0")</div>
+                <div class="kpi-sub">@Model.VariancePercent.ToString("F1")% of budget allocated</div>
+            </div>
+            <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i></div>
+        </div>
+        <div class="kpi-card @(Model.VarianceAmount >= 0 ? "teal" : "red")">
+            <div class="kpi-icon"><i class="fa-solid fa-arrows-left-right-to-line"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Variance</div>
+                <div class="kpi-value">@currency@Model.VarianceAmount.ToString("N0")</div>
+                <div class="kpi-sub">@(Model.VarianceAmount >= 0 ? "Under budget ✓" : "Over budget ✗")</div>
+            </div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Forecasts</div>
+                <div class="kpi-value">@Model.TotalForecasts</div>
+                <div class="kpi-sub">Active forecast models</div>
+            </div>
+        </div>
+        <div class="kpi-card indigo">
+            <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Scenarios</div>
+                <div class="kpi-value">@Model.TotalScenarios</div>
+                <div class="kpi-sub">Planning scenarios</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Pending Requests</div>
+                <div class="kpi-value">@Model.PendingRequests</div>
+                <div class="kpi-sub">Awaiting your review</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card chart-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-chart-area"></i> Budget vs Actual (6 Months)</div>
+            </div>
+            <div class="card-body">
+                <canvas id="fmChart" height="240"></canvas>
+            </div>
+        </div>
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-chart-line"></i> Recent Forecasts</div>
+                <a href="/Forecast/Index" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                    <i class="fa-solid fa-list"></i> View All
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentForecasts.Any())
+                {
+                    <table class="dash-table">
+                        <thead><tr><th>Name</th><th>Method</th><th>Revenue</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var f in Model.RecentForecasts)
+                            {
+                                <tr>
+                                    <td><strong>@f.Title</strong></td>
+                                    <td><span class="role-badge role-employee">@f.ForecastMethod</span></td>
+                                    <td>@currency@f.ProjectedRevenue.ToString("N0")</td>
+                                    <td><span class="status-badge status-@f.Status.ToLower()">@f.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="empty-state"><i class="fa-solid fa-chart-line"></i><p>No forecasts yet. <a href="/Forecast/Create">Create one</a></p></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-wallet"></i> Budget Summary</div>
+                <a href="/Budget/Index" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                    <i class="fa-solid fa-cog"></i> Manage
+                </a>
+            </div>
+            <div class="card-body">
+                @if (Model.RecentBudgets.Any())
+                {
+                    <table class="dash-table">
+                        <thead><tr><th>Budget</th><th>Year</th><th>Allocated</th><th>Utilization</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var b in Model.RecentBudgets)
+                            {
+                                var pct = b.AllocatedAmount > 0 ? (double)(b.UsedAmount / b.AllocatedAmount * 100) : 0;
+                                <tr>
+                                    <td><strong>@b.Title</strong></td>
+                                    <td>@b.FiscalYear</td>
+                                    <td>@currency@b.AllocatedAmount.ToString("N0")</td>
+                                    <td>
+                                        <div class="progress-wrap">
+                                            <div class="progress-bar"><div class="progress-fill @(pct > 90 ? "danger" : pct > 70 ? "warning" : "")" style="width:@pct%"></div></div>
+                                            <span class="progress-pct">@pct.ToString("F0")%</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-badge status-@b.Status.ToLower()">@b.Status</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else { <div class="empty-state"><i class="fa-solid fa-wallet"></i><p>No budgets yet. <a href="/Budget/Create">Create one</a></p></div> }
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-actions-bar">
+        <a href="/Budget/Create" class="btn-primary"><i class="fa-solid fa-plus"></i> New Budget</a>
+        <a href="/Forecast/Create" class="btn-secondary"><i class="fa-solid fa-chart-line"></i> New Forecast</a>
+        <a href="/Scenario/Create" class="btn-secondary"><i class="fa-solid fa-diagram-project"></i> New Scenario</a>
+        <a href="/Variance/Index" class="btn-secondary"><i class="fa-solid fa-arrows-left-right-to-line"></i> Variance Report</a>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+var labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ChartLabels));
+var budgetData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BudgetData));
+var actualData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ActualData));
+new Chart(document.getElementById('fmChart'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [
+            { label: 'Budget', data: budgetData, backgroundColor: 'rgba(99,102,241,0.75)', borderRadius: 6 },
+            { label: 'Actual', data: actualData, backgroundColor: 'rgba(16,185,129,0.75)', borderRadius: 6 }
+        ]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(0,0,0,0.05)' } } } }
+});
+</script>
+}

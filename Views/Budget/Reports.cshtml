@@ -1,0 +1,285 @@
+@model List<BudgetMasterFinal.Models.Budget>
+@{
+    ViewData["Title"] = "Financial Reports";
+    ViewData["PageTitle"] = "Financial Reports";
+    Layout = "_DashboardLayout";
+    
+    int year = ViewBag.Year ?? DateTime.Now.Year;
+    decimal totalAllocated = ViewBag.TotalAllocated ?? 0;
+    decimal totalUsed = ViewBag.TotalUsed ?? 0;
+    decimal totalActualSpend = ViewBag.TotalActualSpend ?? 0;
+    decimal totalVariance = ViewBag.TotalVariance ?? 0;
+    decimal totalRevenue = ViewBag.TotalRevenue ?? 0;
+    decimal totalExpenses = ViewBag.TotalExpenses ?? 0;
+    decimal netIncome = ViewBag.NetIncome ?? 0;
+    decimal projectedRevenue = ViewBag.ProjectedRevenue ?? 0;
+    decimal projectedExpenses = ViewBag.ProjectedExpenses ?? 0;
+    int totalRequests = ViewBag.TotalRequests ?? 0;
+    int approvedRequests = ViewBag.ApprovedRequests ?? 0;
+    int pendingRequests = ViewBag.PendingRequests ?? 0;
+    int rejectedRequests = ViewBag.RejectedRequests ?? 0;
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+
+<div class="dash-container">
+    <!-- Header -->
+    <div class="page-actions" style="margin-bottom: 2rem;">
+        <form method="get" style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-weight: 500;">Fiscal Year:</label>
+            <select name="year" class="form-input-sm" onchange="this.form.submit()">
+                @for (int y = DateTime.Now.Year + 1; y >= DateTime.Now.Year - 3; y--)
+                {
+                    <option value="@y" selected="@(y == year)">@y</option>
+                }
+            </select>
+        </form>
+        <div style="display: flex; gap: 0.75rem;">
+            <a href="/Consolidation/ExportReport?year=@year&format=csv" class="btn-primary" download>
+                <i class="fa-solid fa-download"></i> Export Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-file-invoice-dollar"></i> Executive Summary — FY @year</div>
+        </div>
+        <div class="card-body">
+            <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
+                <div class="kpi-card-soft">
+                    <div class="kpi-icon-soft" style="background: #e0f2fe; color: #0284c7;">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">TOTAL BUDGET</div>
+                        <div class="kpi-value">@currency@totalAllocated.ToString("N0")</div>
+                        <div class="kpi-sub">Allocated funds</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card-soft">
+                    <div class="kpi-icon-soft" style="background: #fed7aa; color: #ea580c;">
+                        <i class="fa-solid fa-coins"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">TOTAL SPENDING</div>
+                        <div class="kpi-value">@currency@totalActualSpend.ToString("N0")</div>
+                        <div class="kpi-sub">Actual expenses</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card-soft">
+                    <div class="kpi-icon-soft" style="background: @(netIncome >= 0 ? "#d1fae5" : "#fecaca"); color: @(netIncome >= 0 ? "#059669" : "#dc2626");">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">NET INCOME</div>
+                        <div class="kpi-value">@(netIncome >= 0 ? "" : "-")@currency@Math.Abs(netIncome).ToString("N0")</div>
+                        <div class="kpi-sub">Revenue - Expenses</div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card-soft">
+                    <div class="kpi-icon-soft" style="background: @(totalVariance >= 0 ? "#d1fae5" : "#fecaca"); color: @(totalVariance >= 0 ? "#059669" : "#dc2626");">
+                        <i class="fa-solid fa-@(totalVariance >= 0 ? "arrow-trend-down" : "arrow-trend-up")"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">BUDGET VARIANCE</div>
+                        <div class="kpi-value">@(totalVariance >= 0 ? "" : "-")@currency@Math.Abs(totalVariance).ToString("N0")</div>
+                        <div class="kpi-sub">@(totalVariance >= 0 ? "Under budget" : "Over budget")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Performance -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-chart-line"></i> Revenue & Expenses</div>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 600; color: var(--success);">Revenue</span>
+                            <span style="font-weight: 700; color: var(--success);">@currency@totalRevenue.ToString("N0")</span>
+                        </div>
+                        <div style="height: 8px; background: var(--bg-secondary); border-radius: 4px; overflow: hidden;">
+                            <div style="height: 100%; background: var(--success); width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 600; color: var(--danger);">Expenses</span>
+                            <span style="font-weight: 700; color: var(--danger);">@currency@totalExpenses.ToString("N0")</span>
+                        </div>
+                        <div style="height: 8px; background: var(--bg-secondary); border-radius: 4px; overflow: hidden;">
+                            @{
+                                var expensePercent = totalRevenue > 0 ? (double)(totalExpenses / totalRevenue * 100) : 100;
+                            }
+                            <div style="height: 100%; background: var(--danger); width: @Math.Min(expensePercent, 100)%;"></div>
+                        </div>
+                    </div>
+                    <div style="padding: 1rem; background: @(netIncome >= 0 ? "#d1fae5" : "#fee2e2"); border-radius: 6px; text-align: center;">
+                        <div style="font-size: 0.875rem; color: @(netIncome >= 0 ? "#065f46" : "#991b1b"); margin-bottom: 0.25rem;">Net Income</div>
+                        <div style="font-size: 1.75rem; font-weight: 700; color: @(netIncome >= 0 ? "#065f46" : "#991b1b");">
+                            @(netIncome >= 0 ? "+" : "")@currency@Math.Abs(netIncome).ToString("N0")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title"><i class="fa-solid fa-file-invoice"></i> Budget Requests</div>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div style="text-align: center; padding: 1.5rem; background: var(--bg-secondary); border-radius: 6px;">
+                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">@totalRequests</div>
+                        <div style="font-weight: 600; color: var(--text-muted);">Total Requests</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.5rem; background: #d1fae5; border-radius: 6px;">
+                        <div style="font-size: 2.5rem; font-weight: 700; color: #065f46; margin-bottom: 0.5rem;">@approvedRequests</div>
+                        <div style="font-weight: 600; color: #065f46;">Approved</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.5rem; background: #fef3c7; border-radius: 6px;">
+                        <div style="font-size: 2.5rem; font-weight: 700; color: #92400e; margin-bottom: 0.5rem;">@pendingRequests</div>
+                        <div style="font-weight: 600; color: #92400e;">Pending</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.5rem; background: #fee2e2; border-radius: 6px;">
+                        <div style="font-size: 2.5rem; font-weight: 700; color: #991b1b; margin-bottom: 0.5rem;">@rejectedRequests</div>
+                        <div style="font-weight: 600; color: #991b1b;">Rejected</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Details -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-table"></i> Budget Breakdown — FY @year</div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Budget / Department</th>
+                            <th>Allocated</th>
+                            <th>Used</th>
+                            <th>Actual Spend</th>
+                            <th>Variance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var budget in Model.OrderByDescending(b => b.AllocatedAmount))
+                        {
+                            var spendPct = budget.AllocatedAmount > 0 ? (double)(budget.ActualSpend / budget.AllocatedAmount * 100) : 0;
+                            <tr>
+                                <td>
+                                    <strong>@budget.Title</strong>
+                                    @if (budget.Department != null)
+                                    {
+                                        <div style="font-size: 0.8125rem; color: var(--text-muted);">@budget.Department.Name</div>
+                                    }
+                                </td>
+                                <td>@currency@budget.AllocatedAmount.ToString("N0")</td>
+                                <td style="color: #9333ea; font-weight: 600;">@currency@budget.UsedAmount.ToString("N0")</td>
+                                <td style="color: var(--warning); font-weight: 600;">@currency@budget.ActualSpend.ToString("N0")</td>
+                                <td style="color: @(budget.VarianceAmount >= 0 ? "var(--success)" : "var(--danger)"); font-weight: 700;">
+                                    @(budget.VarianceAmount >= 0 ? "+" : "")@currency@budget.VarianceAmount.ToString("N0")
+                                </td>
+                                <td>
+                                    <span style="display: inline-block; padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.8125rem; font-weight: 600; 
+                                                 background: @(spendPct > 100 ? "#fee2e2" : spendPct > 80 ? "#fef3c7" : "#d1fae5"); 
+                                                 color: @(spendPct > 100 ? "#991b1b" : spendPct > 80 ? "#92400e" : "#065f46");">
+                                        @(spendPct > 100 ? "Over Budget" : spendPct > 80 ? "At Risk" : "On Track")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    <p>No budget data available for FY @year.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .kpi-card-soft {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .kpi-card-soft:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .kpi-icon-soft {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        pointer-events: none;
+        user-select: none;
+    }
+    
+    .kpi-card-soft .kpi-info {
+        flex: 1;
+        user-select: text;
+    }
+    
+    .kpi-card-soft .kpi-label {
+        font-size: 0.6875rem;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        user-select: text;
+    }
+    
+    .kpi-card-soft .kpi-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+        line-height: 1;
+        user-select: text;
+    }
+    
+    .kpi-card-soft .kpi-sub {
+        font-size: 0.8125rem;
+        color: #94a3b8;
+        font-weight: 400;
+        user-select: text;
+    }
+</style>

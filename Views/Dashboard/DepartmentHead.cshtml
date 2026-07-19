@@ -1,0 +1,184 @@
+@model BudgetMasterFinal.Models.ViewModels.DepartmentHeadDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dash-container">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">TOTAL BUDGET</div>
+                <div class="kpi-value">@Model.DeptAllocated.ToString("C0")</div>
+                <div class="kpi-sub">allocated</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">TOTAL USED</div>
+                <div class="kpi-value">@Model.DeptUsed.ToString("C0")</div>
+                <div class="kpi-sub">allocated</div>
+            </div>
+        </div>
+        <div class="kpi-card teal">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-balance-scale"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">VARIANCE</div>
+                <div class="kpi-value">@Model.DeptVariance.ToString("C0")</div>
+                <div class="kpi-sub">remaining</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">PENDING REQUESTS</div>
+                <div class="kpi-value">@Model.PendingRequests</div>
+                <div class="kpi-sub">awaiting approval</div>
+            </div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">TEAM MEMBERS</div>
+                <div class="kpi-value">@Model.TeamMemberCount</div>
+                <div class="kpi-sub">active</div>
+            </div>
+        </div>
+        <div class="kpi-card indigo">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-chart-bar"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">ACTIVE BUDGETS</div>
+                <div class="kpi-value">@Model.ActiveBudgets</div>
+                <div class="kpi-sub">approved</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget vs Actual Chart -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-chart-line"></i>
+                Budget vs Actual (6 Months)
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.MonthlySpendingData.Any(d => d > 0))
+            {
+                <canvas id="spendingChart" width="400" height="200"></canvas>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <h3>No spending data available</h3>
+                    <p>Transaction data will appear here once spending is recorded</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Budget Requests -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+                Recent Budget Requests
+            </div>
+            <a href="/Budget/RequestApproval" class="btn-primary" style="padding: 8px 16px; font-size: 14px; text-decoration: none;">
+                <i class="fa-solid fa-list"></i> View All
+            </a>
+        </div>
+        <div class="card-body">
+            @if (Model.DeptRequests.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Request</th>
+                            <th>Requester</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model.DeptRequests.Take(5))
+                        {
+                            <tr>
+                                <td>@request.Title</td>
+                                <td>@request.RequestedByUser?.FullName</td>
+                                <td>@request.RequestedAmount.ToString("C")</td>
+                                <td><span class="status-badge status-@request.Status.ToLower()">@request.Status</span></td>
+                                <td>@request.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <h3>No recent requests</h3>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+// Department Spending Chart
+const chartCanvas = document.getElementById('spendingChart');
+if (chartCanvas) {
+    const ctx = chartCanvas.getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.MonthlySpendingLabels)),
+            datasets: [{
+                label: 'Department Spending',
+                data: @Html.Raw(Json.Serialize(Model.MonthlySpendingData)),
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>

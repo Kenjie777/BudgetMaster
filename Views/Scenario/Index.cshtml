@@ -1,0 +1,295 @@
+@model List<BudgetMasterFinal.Models.ScenarioPlan>
+@{
+    ViewData["Title"] = "Scenario Planning";
+    ViewData["PageTitle"] = "Scenario Planning";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="/Scenario/Create" class="btn-primary"><i class="fa-solid fa-plus"></i> New Scenario</a>
+    </div>
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-diagram-project"></i> Scenario Plans</div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="scenario-grid">
+                    @foreach (var s in Model)
+                    {
+                        var adjRev = s.BaseRevenue * (1 + s.RevenueAdjustmentPercent / 100);
+                        var adjExp = s.BaseExpenses * (1 + s.ExpenseAdjustmentPercent / 100);
+                        var baseNetIncome = s.BaseRevenue - s.BaseExpenses;
+                        var adjNetIncome = adjRev - adjExp;
+                        var netImpact = adjNetIncome - baseNetIncome;
+                        
+                        <div class="scenario-card type-@s.ScenarioType.ToLower()">
+                            <div class="sc-header">
+                                <div class="sc-type-badge badge-@s.ScenarioType.ToLower()">@s.ScenarioType.ToUpper()</div>
+                                <div class="sc-actions">
+                                    <a href="/Scenario/Edit/@s.Id" class="btn-icon-sm" title="Edit"><i class="fa-solid fa-pen"></i></a>
+                                    <form action="/Scenario/Delete/@s.Id" method="post" style="display:inline" onsubmit="return confirm('Delete this scenario?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-icon-sm danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <h3 class="sc-name">@s.Name</h3>
+                            <div class="sc-meta">
+                                <span class="sc-year"><i class="fa-solid fa-calendar"></i> FY @s.FiscalYear</span>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(s.Description)) 
+                            { 
+                                <p class="sc-desc">@s.Description</p> 
+                            }
+                            
+                            <div class="sc-metrics">
+                                <!-- Revenue Section -->
+                                <div class="scm-section">
+                                    <div class="scm-section-header">
+                                        <i class="fa-solid fa-arrow-trend-up"></i>
+                                        <span>Revenue</span>
+                                    </div>
+                                    <div class="scm-row">
+                                        <span class="scm-label">Base</span>
+                                        <span class="scm-value">₱@s.BaseRevenue.ToString("N0")</span>
+                                    </div>
+                                    <div class="scm-row highlight">
+                                        <span class="scm-label">Adjustment</span>
+                                        <span class="scm-value @(s.RevenueAdjustmentPercent >= 0 ? "text-green" : "text-red")">
+                                            @(s.RevenueAdjustmentPercent >= 0 ? "+" : "")@s.RevenueAdjustmentPercent.ToString("F1")%
+                                        </span>
+                                    </div>
+                                    <div class="scm-row total">
+                                        <span class="scm-label">Adjusted</span>
+                                        <span class="scm-value">₱@adjRev.ToString("N0")</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Expenses Section -->
+                                <div class="scm-section">
+                                    <div class="scm-section-header">
+                                        <i class="fa-solid fa-arrow-trend-down"></i>
+                                        <span>Expenses</span>
+                                    </div>
+                                    <div class="scm-row">
+                                        <span class="scm-label">Base</span>
+                                        <span class="scm-value">₱@s.BaseExpenses.ToString("N0")</span>
+                                    </div>
+                                    <div class="scm-row highlight">
+                                        <span class="scm-label">Adjustment</span>
+                                        <span class="scm-value @(s.ExpenseAdjustmentPercent >= 0 ? "text-red" : "text-green")">
+                                            @(s.ExpenseAdjustmentPercent >= 0 ? "+" : "")@s.ExpenseAdjustmentPercent.ToString("F1")%
+                                        </span>
+                                    </div>
+                                    <div class="scm-row total">
+                                        <span class="scm-label">Adjusted</span>
+                                        <span class="scm-value">₱@adjExp.ToString("N0")</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Net Impact -->
+                                <div class="scm-impact">
+                                    <div class="scm-impact-label">Net Impact</div>
+                                    <div class="scm-impact-value @(netImpact >= 0 ? "positive" : "negative")">
+                                        @(netImpact >= 0 ? "+" : "")₱@Math.Abs(netImpact).ToString("N0")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state large">
+                    <i class="fa-solid fa-diagram-project"></i>
+                    <h3>No scenarios yet</h3>
+                    <p>Create best-case, worst-case, or custom scenarios to plan ahead.</p>
+                    <a href="/Scenario/Create" class="btn-primary">Create Scenario</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+
+<style>
+    /* Scenario Card Improvements */
+    .scenario-card {
+        position: relative;
+        padding: 1.5rem;
+    }
+    
+    .sc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .sc-type-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-baseline {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .badge-optimistic {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-pessimistic {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .sc-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .sc-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .sc-year {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .sc-year i {
+        font-size: 0.75rem;
+    }
+    
+    .sc-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0 0 1.5rem 0;
+        line-height: 1.5;
+    }
+    
+    .sc-metrics {
+        margin-top: 1.5rem;
+    }
+    
+    .scm-section {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+    
+    .scm-section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .scm-section-header i {
+        font-size: 1rem;
+        color: var(--primary);
+    }
+    
+    .scm-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        font-size: 0.875rem;
+    }
+    
+    .scm-row.highlight {
+        background: rgba(255, 255, 255, 0.5);
+        padding: 0.5rem 0.75rem;
+        margin: 0.25rem -0.75rem;
+        border-radius: 6px;
+    }
+    
+    .scm-row.total {
+        font-weight: 600;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+        margin-top: 0.5rem;
+    }
+    
+    .scm-label {
+        color: var(--text-muted);
+    }
+    
+    .scm-value {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .scm-impact {
+        background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+        padding: 1.25rem;
+        border-radius: 10px;
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    .scm-impact-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .scm-impact-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: white;
+    }
+    
+    .scm-impact-value.positive {
+        color: #d1fae5;
+    }
+    
+    .scm-impact-value.negative {
+        color: #fee2e2;
+    }
+    
+    .sc-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .text-green {
+        color: #10b981 !important;
+        font-weight: 600;
+    }
+    
+    .text-red {
+        color: #ef4444 !important;
+        font-weight: 600;
+    }
+</style>

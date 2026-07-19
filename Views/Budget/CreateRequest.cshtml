@@ -1,0 +1,69 @@
+@{
+    ViewData["Title"] = "Submit Budget Request";
+    ViewData["PageTitle"] = "New Budget Request";
+    Layout = "_DashboardLayout";
+}
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <h2>Submit a Budget Request</h2>
+            <p>Fill in the details below. Your request will be reviewed by your Department Head or Company Admin.</p>
+        </div>
+        <form asp-action="CreateRequest" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            <div class="erp-form-grid">
+                <div class="form-group span-2">
+                    <label class="form-label">Request Title <span class="required">*</span></label>
+                    <input name="Title" class="form-input" placeholder="e.g. Office Equipment Purchase" required />
+                </div>
+                <div class="form-group span-2">
+                    <label class="form-label">Description / Justification</label>
+                    <textarea name="Description" class="form-input" rows="3" placeholder="Explain why this budget is needed..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Requested Amount (â‚±) <span class="required">*</span></label>
+                    <input name="RequestedAmount" type="number" step="0.01" min="0" class="form-input" placeholder="0.00" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <select name="Category" class="form-input form-select">
+                        <option value="General">General</option>
+                        <option value="Operational" selected>Operational</option>
+                        <option value="Capital">Capital</option>
+                        <option value="Emergency">Emergency</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <select name="DepartmentId" class="form-input form-select">
+                        <option value="">â€” Select Department â€”</option>
+                        @foreach (var d in (ViewBag.Departments as List<BudgetMasterFinal.Models.Department> ?? new()))
+                        {
+                            <option value="@d.Id">@d.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Related Budget</label>
+                    <select name="BudgetId" class="form-input form-select">
+                        <option value="">â€” Select Budget (optional) â€”</option>
+                        @foreach (var b in (ViewBag.Budgets as List<BudgetMasterFinal.Models.Budget> ?? new()))
+                        {
+                            <option value="@b.Id">@b.Title (@b.FiscalYear)</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Needed By Date</label>
+                    <input name="NeededByDate" type="date" class="form-input" />
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Budget/MyRequests" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+

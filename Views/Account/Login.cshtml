@@ -1,0 +1,123 @@
+@model BudgetMasterFinal.Models.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In";
+    Layout = "_Layout";
+}
+
+<div class="auth-page">
+    <div class="auth-left">
+        <div class="auth-left-content">
+            <div class="auth-brand">
+                <div class="brand-icon-lg"><i class="fa-solid fa-chart-pie"></i></div>
+                <span class="auth-brand-name">BudgetMaster</span>
+            </div>
+            <h2 class="auth-tagline">Smart Financial Planning Starts Here</h2>
+            <p class="auth-desc">Manage budgets, forecast performance, and analyze variances — all in one powerful platform.</p>
+            <div class="auth-features">
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Multi-tenant SaaS Architecture</div>
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Role-based Access Control</div>
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Real-time Budget Tracking</div>
+                <div class="auth-feat"><i class="fa-solid fa-check-circle"></i> Advanced Financial Forecasting</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-card">
+            <div class="auth-card-header">
+                <div class="auth-welcome-logo">
+                    <img src="~/images/BudgetMasterLogo1.png" alt="BudgetMaster" class="welcome-logo" />
+                </div>
+                <h1 class="auth-title">Welcome back</h1>
+                <p class="auth-subtitle">Sign in to your BudgetMaster account</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="auth-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div asp-validation-summary="ModelOnly"></div>
+                </div>
+            }
+
+            <form asp-action="Login" method="post" class="auth-form" id="loginForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                <div class="form-group">
+                    <label asp-for="Email" class="form-label">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input asp-for="Email" type="email" class="form-input" placeholder="you@company.com" id="emailInput" autocomplete="email" />
+                    </div>
+                    <span asp-validation-for="Email" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input asp-for="Password" type="password" class="form-input" placeholder="••••••••" id="passwordInput" autocomplete="current-password" />
+                        <button type="button" class="input-toggle" onclick="togglePassword('passwordInput', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Password" class="field-error"></span>
+                </div>
+
+                <div class="form-row-split">
+                    <label class="checkbox-label">
+                        <input asp-for="RememberMe" type="checkbox" class="form-checkbox" />
+                        <span class="checkbox-custom"></span>
+                        Remember me
+                    </label>
+                    <a href="/Account/ForgotPassword" class="forgot-password-link">Forgot password?</a>
+                </div>
+
+                <!-- Google reCAPTCHA -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <div class="g-recaptcha" data-sitekey="6LdUJugsAAAAAHKoe-mqK8CitH5NbSXxEMxXrbNJ"></div>
+                    <span id="recaptchaError" class="field-error" style="display: none;">Please complete the reCAPTCHA verification</span>
+                </div>
+
+                <button type="submit" class="btn-auth-primary" id="loginBtn">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loader hidden"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                </button>
+            </form>
+
+            <p class="auth-switch">Don't have an account? <a href="/Account/Register">Create one free</a></p>
+            <p class="auth-back"><a href="/"><i class="fa-solid fa-arrow-left"></i> Back to home</a></p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+function togglePassword(id, btn) {
+    const input = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+    }
+}
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    // Check if reCAPTCHA is completed
+    var recaptchaResponse = grecaptcha.getResponse();
+    if (recaptchaResponse.length === 0) {
+        e.preventDefault();
+        document.getElementById('recaptchaError').style.display = 'block';
+        return false;
+    }
+    document.getElementById('recaptchaError').style.display = 'none';
+    document.querySelector('.btn-text').classList.add('hidden');
+    document.querySelector('.btn-loader').classList.remove('hidden');
+});
+</script>
+}
+

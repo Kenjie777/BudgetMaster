@@ -1,0 +1,177 @@
+@model IEnumerable<BudgetMasterFinal.Models.BudgetRequest>
+@{
+    ViewData["Title"] = "Budget Requests";
+}
+
+<div class="dash-container">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card green">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-file-invoice-dollar"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">TOTAL REQUESTS</div>
+                <div class="kpi-value">@Model.Count()</div>
+                <div class="kpi-sub">all time</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">PENDING</div>
+                <div class="kpi-value">@Model.Count(r => r.Status == "Pending")</div>
+                <div class="kpi-sub">awaiting review</div>
+            </div>
+        </div>
+        <div class="kpi-card teal">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-check-circle"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">APPROVED</div>
+                <div class="kpi-value">@Model.Count(r => r.Status == "OperationallyApproved" || r.Status == "Approved")</div>
+                <div class="kpi-sub">processed</div>
+            </div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-dollar-sign"></i>
+            </div>
+            <div class="kpi-info">
+                <div class="kpi-label">TOTAL VALUE</div>
+                <div class="kpi-value">@Model.Sum(r => r.RequestedAmount).ToString("C0")</div>
+                <div class="kpi-sub">requested</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requests Table -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-list"></i>
+                Budget Requests
+            </div>
+            <a href="/Budget/CreateRequest" class="card-link">New Request</a>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Request</th>
+                            <th>Requester</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="cell-main">@request.Title</div>
+                                    <div class="cell-sub">@request.Category</div>
+                                </td>
+                                <td>@request.RequestedByUser?.FullName</td>
+                                <td>@request.RequestedAmount.ToString("C")</td>
+                                <td>
+                                    @switch (request.Status)
+                                    {
+                                        case "Pending":
+                                            <span class="status-badge status-pending">Pending</span>
+                                            break;
+                                        case "OperationallyApproved":
+                                            <span class="status-badge status-published">Finance Review</span>
+                                            break;
+                                        case "Approved":
+                                            <span class="status-badge status-approved">Approved</span>
+                                            break;
+                                        case "Rejected":
+                                        case "FinanciallyRejected":
+                                            <span class="status-badge status-rejected">Rejected</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>@request.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    <div class="action-btns">
+                                        @if (request.Status == "Pending")
+                                        {
+                                            <button class="btn-icon" onclick="approveRequest(@request.Id, 'Approved')" title="Approve">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                            <button class="btn-icon danger" onclick="rejectRequest(@request.Id)" title="Reject">
+                                                <i class="fa-solid fa-times"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <h3>No Budget Requests</h3>
+                    <p>No requests submitted yet</p>
+                    <a href="/Budget/CreateRequest" class="btn-primary">Create Request</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal-overlay" id="approvalModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="modalTitle">Approve Request</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="approvalForm" method="post" action="/Budget/ApproveRequest">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="requestId" name="id" />
+            <input type="hidden" id="action" name="action" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="notes">Notes (Optional)</label>
+                    <textarea id="notes" name="notes" class="form-input" rows="3" placeholder="Add any comments or conditions..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary" id="confirmButton">Confirm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function approveRequest(id, action) {
+    document.getElementById('requestId').value = id;
+    document.getElementById('action').value = action;
+    document.getElementById('modalTitle').textContent = action === 'Approved' ? 'Approve Request' : 'Reject Request';
+    document.getElementById('confirmButton').textContent = action === 'Approved' ? 'Approve' : 'Reject';
+    document.getElementById('confirmButton').className = action === 'Approved' ? 'btn-primary' : 'btn-reject';
+    document.getElementById('approvalModal').classList.add('open');
+}
+
+function rejectRequest(id) {
+    approveRequest(id, 'Rejected');
+}
+
+function closeModal() {
+    document.getElementById('approvalModal').classList.remove('open');
+    document.getElementById('notes').value = '';
+}
+</script>

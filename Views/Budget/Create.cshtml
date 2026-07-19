@@ -1,0 +1,109 @@
+@model BudgetMasterFinal.Models.Budget
+@{
+    ViewData["Title"] = "New Budget";
+    ViewData["PageTitle"] = "Create Budget";
+    Layout = "_DashboardLayout";
+    var departments = ViewBag.Departments as List<BudgetMasterFinal.Models.Department> ?? new();
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-wallet"></i>
+            <h2>New Budget Allocation</h2>
+            <p>Define budget parameters and allocate funds to departments or projects.</p>
+        </div>
+        <form asp-action="Create" asp-controller="Budget" method="post" class="erp-form" id="budgetForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger"></div>
+            
+            <div class="erp-form-grid">
+                <div class="form-group span-2">
+                    <label class="form-label">Budget Title <span class="required">*</span></label>
+                    <input asp-for="Title" class="form-input" placeholder="e.g. Q1 2025 Operations Budget" required />
+                    <span asp-validation-for="Title" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <select asp-for="DepartmentId" class="form-input form-select">
+                        <option value="">All Departments</option>
+                        @foreach (var d in departments)
+                        {
+                            <option value="@d.Id">@d.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fiscal Year <span class="required">*</span></label>
+                    <input asp-for="FiscalYear" type="number" class="form-input" value="@DateTime.Now.Year" min="2020" max="2035" required />
+                    <span asp-validation-for="FiscalYear" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quarter</label>
+                    <select asp-for="Quarter" class="form-input form-select">
+                        <option value="">Annual</option>
+                        <option value="Q1">Q1</option>
+                        <option value="Q2">Q2</option>
+                        <option value="Q3">Q3</option>
+                        <option value="Q4">Q4</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Allocated Amount (@currency) <span class="required">*</span></label>
+                    <input asp-for="AllocatedAmount" type="number" class="form-input" placeholder="0.00" step="0.01" min="0.01" required />
+                    <span asp-validation-for="AllocatedAmount" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" class="form-input form-select">
+                        <option value="Draft">Draft</option>
+                        <option value="Active">Active</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                </div>
+                <div class="form-group span-2">
+                    <label class="form-label">Description</label>
+                    <textarea asp-for="Description" class="form-input form-textarea" rows="3" placeholder="Describe the purpose and scope of this budget..."></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Budget/Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    <i class="fa-solid fa-save"></i> Create Budget
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            console.log('Budget form loaded');
+            
+            $('#budgetForm').on('submit', function(e) {
+                console.log('Form submitting...');
+                
+                // Basic validation
+                var title = $('#Title').val();
+                var fiscalYear = $('#FiscalYear').val();
+                var allocatedAmount = $('#AllocatedAmount').val();
+                
+                if (!title || !fiscalYear || !allocatedAmount || allocatedAmount <= 0) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields with valid values.');
+                    return false;
+                }
+                
+                // Disable submit button to prevent double submission
+                $('#submitBtn').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Creating...');
+            });
+        });
+    </script>
+}

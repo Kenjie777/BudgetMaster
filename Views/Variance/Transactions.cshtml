@@ -1,0 +1,94 @@
+@model List<BudgetMasterFinal.Models.ActualTransaction>
+@{
+    ViewData["Title"] = "Transactions";
+    ViewData["PageTitle"] = "Actual Transactions";
+    Layout = "_DashboardLayout";
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="/Variance/AddTransaction" class="btn-primary"><i class="fa-solid fa-plus"></i> Add Transaction</a>
+    </div>
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-receipt"></i> Actual Transactions</div>
+            <input type="text" class="filter-input" id="searchInput" placeholder="Search..." onkeyup="filterTable()" />
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table" id="txnTable">
+                    <thead>
+                        <tr><th>Date</th><th>Description</th><th>Department</th><th>Budget</th><th>Category</th><th>Type</th><th>Amount</th><th>Ref#</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model)
+                        {
+                            <tr>
+                                <td>@t.TransactionDate.ToString("MMM dd, yyyy")</td>
+                                <td>@t.Description</td>
+                                <td>@(t.Department?.Name ?? "—")</td>
+                                <td>
+                                    @if (t.Budget != null)
+                                    {
+                                        <span class="badge-info" title="@t.Budget.Title">@t.Budget.Title</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--text-muted);">—</span>
+                                    }
+                                </td>
+                                <td>@t.Category</td>
+                                <td><span class="status-badge @(t.TransactionType == "Revenue" ? "status-active" : "status-closed")">@t.TransactionType</span></td>
+                                <td class="@(t.TransactionType == "Revenue" ? "text-green" : "text-red") fw-bold">
+                                    @(t.TransactionType == "Revenue" ? "+" : "-")@currency@t.Amount.ToString("N0")
+                                </td>
+                                <td>@(t.ReferenceNumber ?? "—")</td>
+                                <td>
+                                    <form action="/Variance/DeleteTransaction/@t.Id" method="post" onsubmit="return confirm('Delete?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-icon danger"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state large">
+                    <i class="fa-solid fa-receipt"></i>
+                    <h3>No transactions yet</h3>
+                    <a href="/Variance/AddTransaction" class="btn-primary">Add First Transaction</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge-info {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background: #e3f2fd;
+        color: #1976d2;
+        border-radius: 4px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+    }
+</style>
+
+@section Scripts {
+<script>
+function filterTable() {
+    const v = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#txnTable tbody tr').forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(v) ? '' : 'none';
+    });
+}
+</script>
+}

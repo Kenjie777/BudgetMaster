@@ -1,0 +1,179 @@
+@model IEnumerable<BudgetMasterFinal.Models.BillingTransaction>
+@{
+    ViewData["Title"] = "Billing Transactions";
+    ViewData["PageTitle"] = "Billing Transactions";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-receipt"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Transactions</div>
+                <div class="kpi-value">@Model.Count()</div>
+                <div class="kpi-sub">All time</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Completed</div>
+                <div class="kpi-value">@Model.Count(t => t.Status == "Completed")</div>
+                <div class="kpi-sub">Successful payments</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Pending</div>
+                <div class="kpi-value">@Model.Count(t => t.Status == "Pending")</div>
+                <div class="kpi-sub">Awaiting processing</div>
+            </div>
+        </div>
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Amount</div>
+                <div class="kpi-value">₱@Model.Where(t => t.Status == "Completed").Sum(t => t.NetAmount).ToString("N0")</div>
+                <div class="kpi-sub">Revenue processed</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-receipt"></i> Recent Transactions</div>
+            <div class="card-filters">
+                <select id="statusFilter" class="filter-input">
+                    <option value="">All Statuses</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Failed">Failed</option>
+                </select>
+                <select id="typeFilter" class="filter-input">
+                    <option value="">All Types</option>
+                    <option value="Payment">Payment</option>
+                    <option value="Refund">Refund</option>
+                    <option value="Credit">Credit</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Tenant</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Payment Method</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var transaction in Model.OrderByDescending(t => t.TransactionDate).Take(50))
+                        {
+                            <tr data-status="@transaction.Status" data-type="@transaction.TransactionType">
+                                <td>
+                                    <div class="cell-main">#@transaction.Id.ToString("D6")</div>
+                                    @if (!string.IsNullOrEmpty(transaction.PaymentReference))
+                                    {
+                                        <div class="cell-sub">Ref: @transaction.PaymentReference</div>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="cell-main">@transaction.Tenant?.CompanyName</div>
+                                    @if (transaction.Subscription != null)
+                                    {
+                                        <div class="cell-sub">@transaction.Subscription.SubscriptionPlan.Name</div>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="status-badge @(transaction.TransactionType == "Payment" ? "status-active" : transaction.TransactionType == "Refund" ? "status-pending" : "status-draft")">
+                                        @transaction.TransactionType
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="cell-main">₱@transaction.Amount.ToString("N2")</div>
+                                    @if (transaction.NetAmount != transaction.Amount)
+                                    {
+                                        <div class="cell-sub">Net: ₱@transaction.NetAmount.ToString("N2")</div>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="status-badge @(transaction.Status == "Completed" ? "status-active" : transaction.Status == "Pending" ? "status-pending" : "status-closed")">
+                                        @transaction.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="cell-main">@transaction.TransactionDate.ToString("MMM dd, yyyy")</div>
+                                    <div class="cell-sub">@transaction.TransactionDate.ToString("HH:mm")</div>
+                                </td>
+                                <td>@(transaction.PaymentMethod ?? "—")</td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="btn-icon" title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        @if (transaction.Status == "Pending")
+                                        {
+                                            <button class="btn-icon" title="Process">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-receipt"></i>
+                    <h3>No Transactions Found</h3>
+                    <p>No billing transactions have been processed yet.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Filter functionality
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        filterTransactions();
+    });
+
+    document.getElementById('typeFilter').addEventListener('change', function() {
+        filterTransactions();
+    });
+
+    function filterTransactions() {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const typeFilter = document.getElementById('typeFilter').value;
+        const rows = document.querySelectorAll('.dash-table tbody tr');
+
+        rows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const type = row.getAttribute('data-type');
+            
+            const matchesStatus = !statusFilter || status === statusFilter;
+            const matchesType = !typeFilter || type === typeFilter;
+            
+            if (matchesStatus && matchesType) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+</script>
+}

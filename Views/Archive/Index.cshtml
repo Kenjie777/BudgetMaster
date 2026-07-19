@@ -1,0 +1,764 @@
+@using System.Collections.Generic
+@model List<BudgetMasterFinal.Models.ArchivedItem>
+@{
+    ViewData["Title"] = "Archived Items";
+    ViewData["PageTitle"] = "Archive Management";
+    Layout = "_DashboardLayout";
+    var entityCounts = ViewBag.EntityCounts as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var currentEntityType = ViewBag.CurrentEntityType as string;
+    var totalCount = ViewBag.TotalCount as int? ?? 0;
+    var users = ViewBag.Users as Dictionary<string, string> ?? new Dictionary<string, string>();
+}
+
+<div class="dash-container">
+    <!-- Filter Card -->
+    <div class="dash-card" style="margin-bottom: 20px;">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-filter"></i> Filters</div>
+        </div>
+        <div class="card-body">
+            <form method="get" style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px;">Search</label>
+                    <input type="text" name="search" value="@ViewBag.Search" placeholder="Search by name or reason..." class="filter-input" style="width: 100%;" />
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px;">From Date</label>
+                    <input type="date" name="fromDate" value="@(ViewBag.FromDate?.ToString("yyyy-MM-dd"))" class="filter-input" style="width: 100%;" />
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px;">To Date</label>
+                    <input type="date" name="toDate" value="@(ViewBag.ToDate?.ToString("yyyy-MM-dd"))" class="filter-input" style="width: 100%;" />
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn-primary"><i class="fa-solid fa-search"></i> Search</button>
+                    <a href="@Url.Action("Index")" class="btn-secondary"><i class="fa-solid fa-rotate-right"></i> Reset</a>
+                </div>
+                <input type="hidden" name="entityType" value="@currentEntityType" />
+            </form>
+        </div>
+    </div>
+
+    <!-- Entity Type Tabs -->
+    <div class="dash-card" style="margin-bottom: 20px;">
+        <div class="card-body" style="padding: 16px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="@Url.Action("Index")" class="filter-tab @(string.IsNullOrEmpty(currentEntityType) ? "active" : "")">
+                    <i class="fa-solid fa-layer-group"></i> All (@totalCount)
+                </a>
+                @if (entityCounts.ContainsKey("ApplicationUser"))
+                {
+                    <a href="@Url.Action("Index", new { entityType = "ApplicationUser" })" class="filter-tab @(currentEntityType == "ApplicationUser" ? "active" : "")">
+                        <i class="fa-solid fa-users"></i> Users (@entityCounts["ApplicationUser"])
+                    </a>
+                }
+                @if (entityCounts.ContainsKey("Department"))
+                {
+                    <a href="@Url.Action("Index", new { entityType = "Department" })" class="filter-tab @(currentEntityType == "Department" ? "active" : "")">
+                        <i class="fa-solid fa-building"></i> Departments (@entityCounts["Department"])
+                    </a>
+                }
+                @if (entityCounts.ContainsKey("Budget"))
+                {
+                    <a href="@Url.Action("Index", new { entityType = "Budget" })" class="filter-tab @(currentEntityType == "Budget" ? "active" : "")">
+                        <i class="fa-solid fa-sack-dollar"></i> Budgets (@entityCounts["Budget"])
+                    </a>
+                }
+                @if (entityCounts.ContainsKey("BudgetRequest"))
+                {
+                    <a href="@Url.Action("Index", new { entityType = "BudgetRequest" })" class="filter-tab @(currentEntityType == "BudgetRequest" ? "active" : "")">
+                        <i class="fa-solid fa-file-invoice-dollar"></i> Requests (@entityCounts["BudgetRequest"])
+                    </a>
+                }
+                @if (entityCounts.ContainsKey("Forecast"))
+                {
+                    <a href="@Url.Action("Index", new { entityType = "Forecast" })" class="filter-tab @(currentEntityType == "Forecast" ? "active" : "")">
+                        <i class="fa-solid fa-chart-line"></i> Forecasts (@entityCounts["Forecast"])
+                    </a>
+                }
+                @if (entityCounts.ContainsKey("ScenarioPlan"))
+                {
+                    <a href="@Url.Action("Index", new { entityType = "ScenarioPlan" })" class="filter-tab @(currentEntityType == "ScenarioPlan" ? "active" : "")">
+                        <i class="fa-solid fa-diagram-project"></i> Scenarios (@entityCounts["ScenarioPlan"])
+                    </a>
+                }
+                @if (User.IsInRole("SuperAdmin") && entityCounts.ContainsKey("Tenant"))
+                {
+                    <a href="@Url.Action("Index", new { entityType = "Tenant" })" class="filter-tab @(currentEntityType == "Tenant" ? "active" : "")">
+                        <i class="fa-solid fa-building-user"></i> Tenants (@entityCounts["Tenant"])
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Archived Items Table -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-box-archive"></i> Archived Items</div>
+        </div>
+        <div class="card-body">
+            @Html.AntiForgeryToken()
+            @if (Model.Count == 0)
+            {
+                <div style="text-align: center; padding: 60px 20px; color: #94a3b8;">
+                    <i class="fa-solid fa-box-open" style="font-size: 64px; margin-bottom: 16px; display: block;"></i>
+                    <h3 style="font-size: 20px; margin-bottom: 8px;">No Archived Items</h3>
+                    <p>There are no archived items matching your criteria.</p>
+                </div>
+            }
+            else
+            {
+                <table class="dash-table" id="archiveTable">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Name</th>
+                            <th>Archived Date</th>
+                            <th>Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="status-badge status-active" style="display: inline-flex; align-items: center; gap: 6px;">
+                                        @switch (item.EntityType)
+                                        {
+                                            case "ApplicationUser":
+                                                <i class="fa-solid fa-user"></i>
+                                                break;
+                                            case "Department":
+                                                <i class="fa-solid fa-building"></i>
+                                                break;
+                                            case "Budget":
+                                                <i class="fa-solid fa-sack-dollar"></i>
+                                                break;
+                                            case "BudgetRequest":
+                                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                                                break;
+                                            case "Forecast":
+                                                <i class="fa-solid fa-chart-line"></i>
+                                                break;
+                                            case "ScenarioPlan":
+                                                <i class="fa-solid fa-diagram-project"></i>
+                                                break;
+                                            case "Tenant":
+                                                <i class="fa-solid fa-building-user"></i>
+                                                break;
+                                            default:
+                                                <i class="fa-solid fa-box"></i>
+                                                break;
+                                        }
+                                        @item.EntityType
+                                    </span>
+                                </td>
+                                <td><strong>@item.EntityName</strong></td>
+                                <td>@item.ArchivedAt.ToString("MMM dd, yyyy hh:mm tt")</td>
+                                <td>@(string.IsNullOrEmpty(item.ArchiveReason) ? "—" : item.ArchiveReason)</td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button type="button" class="btn-icon success restore-btn" data-entity-type="@item.EntityType" data-entity-id="@item.EntityId" data-entity-name="@item.EntityName" title="Restore">
+                                            <i class="fa-solid fa-rotate-left"></i>
+                                        </button>
+                                        @if (User.IsInRole("SuperAdmin"))
+                                        {
+                                            <button type="button" class="btn-icon danger delete-btn" data-entity-type="@item.EntityType" data-entity-id="@item.EntityId" data-entity-name="@item.EntityName" title="Delete Forever">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-header" id="modalHeader">
+            <h3 id="modalTitle"><i class="fa-solid fa-circle-question"></i> Confirm Action</h3>
+            <button type="button" class="modal-close" onclick="closeConfirmModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p id="modalMessage" style="font-size: 0.95rem; line-height: 1.6; color: #475569;"></p>
+            <div id="deleteInputContainer" style="display: none; margin-top: 1rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem;">
+                    Type <strong>DELETE</strong> to confirm:
+                </label>
+                <input type="text" id="deleteConfirmInput" class="form-input" placeholder="Type DELETE" style="width: 100%;" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" onclick="closeConfirmModal()">
+                <i class="fa-solid fa-xmark"></i> Cancel
+            </button>
+            <button type="button" class="btn-primary" id="modalConfirmBtn" onclick="confirmModalAction()">
+                <i class="fa-solid fa-check"></i> Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.filter-tab {
+    padding: 10px 16px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-tab:hover {
+    background: #f1f5f9;
+    border-color: #1e3a5f;
+    color: #1e3a5f;
+}
+
+.filter-tab.active {
+    background: #1e3a5f;
+    border-color: #1e3a5f;
+    color: white;
+}
+
+/* Override global btn-icon styles for Archive page */
+#archiveTable .btn-icon {
+    width: auto !important;
+    height: auto !important;
+    padding: 8px 12px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    font-size: 14px !important;
+}
+
+#archiveTable .btn-icon.success {
+    background: #10b981 !important;
+    color: white !important;
+}
+
+#archiveTable .btn-icon.success:hover {
+    background: #059669 !important;
+}
+
+#archiveTable .btn-icon.danger {
+    background: #ef4444 !important;
+    color: white !important;
+}
+
+#archiveTable .btn-icon.danger:hover {
+    background: #dc2626 !important;
+}
+
+#archiveTable .action-btns {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+/* Custom Modal Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+@@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+@@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+}
+
+.modal-header.warning {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+}
+
+.modal-header.danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+@@media (max-width: 768px) {
+    .card-body form {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .modal-card {
+        margin: 1rem;
+        max-width: calc(100% - 2rem) !important;
+    }
+}
+</style>
+}
+
+@section Scripts {
+<script>
+// Modal state
+let modalCallback = null;
+let modalType = 'restore';
+
+function showConfirmModal(title, message, type, callback) {
+    modalCallback = callback;
+    modalType = type;
+    
+    const modal = document.getElementById('confirmModal');
+    const modalHeader = document.getElementById('modalHeader');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const deleteInputContainer = document.getElementById('deleteInputContainer');
+    const deleteInput = document.getElementById('deleteConfirmInput');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    
+    // Set title and message
+    modalTitle.innerHTML = title;
+    modalMessage.innerHTML = message;
+    
+    // Style based on type
+    modalHeader.className = 'modal-header';
+    if (type === 'delete') {
+        modalHeader.classList.add('danger');
+        confirmBtn.className = 'btn-danger';
+        confirmBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete Forever';
+        deleteInputContainer.style.display = 'block';
+        deleteInput.value = '';
+    } else if (type === 'restore') {
+        // Green header for restore
+        modalHeader.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        confirmBtn.className = 'btn-primary';
+        confirmBtn.style.background = '#10b981';
+        confirmBtn.style.borderColor = '#10b981';
+        confirmBtn.innerHTML = '<i class="fa-solid fa-rotate-left"></i> Restore';
+        deleteInputContainer.style.display = 'none';
+    }
+    
+    // Show modal
+    modal.classList.add('open');
+    
+    // Focus input if delete type
+    if (type === 'delete') {
+        setTimeout(() => deleteInput.focus(), 100);
+    }
+}
+
+function closeConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    modal.classList.remove('open');
+    modalCallback = null;
+}
+
+function confirmModalAction() {
+    console.log('=== CONFIRM MODAL ACTION CALLED ===');
+    console.log('Modal type:', modalType);
+    console.log('Modal callback exists:', modalCallback !== null);
+    
+    if (modalType === 'delete') {
+        const deleteInput = document.getElementById('deleteConfirmInput');
+        console.log('Delete input value:', deleteInput.value);
+        if (deleteInput.value !== 'DELETE') {
+            alert('You must type "DELETE" exactly to confirm permanent deletion.');
+            deleteInput.focus();
+            return;
+        }
+    }
+    
+    // DON'T close modal yet - let the callback handle it
+    // closeConfirmModal();
+    
+    if (modalCallback) {
+        console.log('Executing modal callback...');
+        modalCallback();
+    } else {
+        console.error('No modal callback defined!');
+        closeConfirmModal();
+    }
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeConfirmModal();
+    }
+});
+
+// Close modal on backdrop click
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeConfirmModal();
+    }
+});
+
+// Use event delegation to handle button clicks
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up event listeners');
+    
+    // Handle restore button clicks
+    document.addEventListener('click', function(e) {
+        var restoreBtn = e.target.closest('.restore-btn');
+        if (restoreBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Restore button clicked via event delegation');
+            
+            var entityType = restoreBtn.getAttribute('data-entity-type');
+            var entityId = restoreBtn.getAttribute('data-entity-id');
+            var entityName = restoreBtn.getAttribute('data-entity-name');
+            
+            // Show custom modal
+            showConfirmModal(
+                '<i class="fa-solid fa-rotate-left"></i> Restore ' + entityType,
+                'Are you sure you want to restore this ' + entityType + '?<br><br><strong>' + entityName + '</strong><br><br>This will return it to active status.',
+                'restore',
+                function() {
+                    restoreItem(entityType, entityId, entityName);
+                }
+            );
+            
+            return false;
+        }
+        
+        var deleteBtn = e.target.closest('.delete-btn');
+        if (deleteBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Delete button clicked via event delegation');
+            
+            var entityType = deleteBtn.getAttribute('data-entity-type');
+            var entityId = deleteBtn.getAttribute('data-entity-id');
+            var entityName = deleteBtn.getAttribute('data-entity-name');
+            
+            // Show custom modal
+            showConfirmModal(
+                '<i class="fa-solid fa-triangle-exclamation"></i> Permanent Delete Warning',
+                '⚠️ <strong>This action CANNOT be undone!</strong><br><br>Are you ABSOLUTELY SURE you want to PERMANENTLY DELETE this ' + entityType + '?<br><br><strong>' + entityName + '</strong>',
+                'delete',
+                function() {
+                    permanentDelete(entityType, entityId, entityName);
+                }
+            );
+            
+            return false;
+        }
+    });
+    
+    console.log('Event listeners set up successfully');
+});
+
+function restoreItem(entityType, entityId, entityName) {
+    console.log('=== RESTORE FUNCTION CALLED ===');
+    console.log('Entity Type:', entityType);
+    console.log('Entity ID:', entityId);
+    console.log('Entity Name:', entityName);
+    
+    var token = document.querySelector('input[name="__RequestVerificationToken"]');
+    if (!token) {
+        console.error('Anti-forgery token not found');
+        closeConfirmModal();
+        showConfirmModal(
+            '<i class="fa-solid fa-circle-xmark"></i> Error',
+            'Security token not found. Please refresh the page and try again.',
+            'restore',
+            function() {
+                location.reload();
+            }
+        );
+        return false;
+    }
+    
+    console.log('Token found:', token.value.substring(0, 20) + '...');
+    
+    var formData = 'entityType=' + encodeURIComponent(entityType) + 
+                   '&entityId=' + encodeURIComponent(entityId) + 
+                   '&__RequestVerificationToken=' + encodeURIComponent(token.value);
+    
+    console.log('Form data prepared');
+    console.log('Sending restore request to:', '@Url.Action("Restore", "Archive")');
+    
+    // Show loading state
+    var confirmBtn = document.getElementById('modalConfirmBtn');
+    var originalBtnContent = confirmBtn.innerHTML;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Restoring...';
+    
+    fetch('@Url.Action("Restore", "Archive")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+    })
+    .then(function(response) {
+        console.log('Response received');
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        if (!response.ok) {
+            console.error('Response not OK:', response.status, response.statusText);
+            throw new Error('Server returned ' + response.status + ': ' + response.statusText);
+        }
+        
+        return response.json();
+    })
+    .then(function(data) {
+        console.log('Response data:', data);
+        
+        // Reset button
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalBtnContent;
+        
+        if (data.success) {
+            console.log('Restore successful!');
+            closeConfirmModal();
+            
+            // Force hard reload
+            console.log('Reloading page...');
+            window.location.reload(true);
+        } else {
+            closeConfirmModal();
+            console.error('Restore failed:', data.message);
+            
+            setTimeout(function() {
+                showConfirmModal(
+                    '<i class="fa-solid fa-circle-xmark"></i> Error',
+                    '<div style="text-align: center; padding: 1rem;">' +
+                    '<i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;"></i>' +
+                    '<p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Restore Failed</p>' +
+                    '<p style="color: #64748b;">' + data.message + '</p>' +
+                    '</div>',
+                    'restore',
+                    null
+                );
+            }, 100);
+        }
+    })
+    .catch(function(error) {
+        console.error('Fetch error:', error);
+        
+        // Reset button
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalBtnContent;
+        
+        closeConfirmModal();
+        
+        setTimeout(function() {
+            showConfirmModal(
+                '<i class="fa-solid fa-circle-xmark"></i> Error',
+                '<div style="text-align: center; padding: 1rem;">' +
+                '<i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;"></i>' +
+                '<p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Connection Error</p>' +
+                '<p style="color: #64748b;">' + error.message + '</p>' +
+                '<p style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem;">Check the console for details.</p>' +
+                '</div>',
+                'restore',
+                null
+            );
+        }, 100);
+    });
+    
+    return false;
+}
+
+function permanentDelete(entityType, entityId, entityName) {
+    console.log('=== DELETE FUNCTION CALLED ===');
+    console.log('Entity Type:', entityType);
+    console.log('Entity ID:', entityId);
+    console.log('Entity Name:', entityName);
+    
+    var token = document.querySelector('input[name="__RequestVerificationToken"]');
+    if (!token) {
+        console.error('Anti-forgery token not found');
+        showConfirmModal(
+            '<i class="fa-solid fa-circle-xmark"></i> Error',
+            'Security token not found. Please refresh the page and try again.',
+            'delete',
+            function() {
+                location.reload();
+            }
+        );
+        return false;
+    }
+    
+    console.log('Token found:', token.value.substring(0, 20) + '...');
+    
+    var formData = 'entityType=' + encodeURIComponent(entityType) + 
+                   '&entityId=' + encodeURIComponent(entityId) + 
+                   '&__RequestVerificationToken=' + encodeURIComponent(token.value);
+    
+    console.log('Sending delete request to:', '@Url.Action("PermanentDelete", "Archive")');
+    
+    // Show loading state
+    var confirmBtn = document.getElementById('modalConfirmBtn');
+    var originalBtnContent = confirmBtn.innerHTML;
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+    
+    fetch('@Url.Action("PermanentDelete", "Archive")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+    })
+    .then(function(response) {
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            console.error('Response not OK:', response.status, response.statusText);
+            throw new Error('Server returned ' + response.status + ': ' + response.statusText);
+        }
+        
+        return response.json();
+    })
+    .then(function(data) {
+        console.log('Response data:', data);
+        
+        // Reset button
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalBtnContent;
+        
+        if (data.success) {
+            console.log('Delete successful!');
+            closeConfirmModal();
+            
+            // Just reload immediately
+            console.log('Reloading page...');
+            location.reload();
+        } else {
+            closeConfirmModal();
+            console.error('Delete failed:', data.message);
+            showConfirmModal(
+                '<i class="fa-solid fa-circle-xmark"></i> Error',
+                '<div style="text-align: center; padding: 1rem;">' +
+                '<i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;"></i>' +
+                '<p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Delete Failed</p>' +
+                '<p style="color: #64748b;">' + data.message + '</p>' +
+                '</div>',
+                'delete',
+                null
+            );
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        
+        // Reset button
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = originalBtnContent;
+        
+        closeConfirmModal();
+        showConfirmModal(
+            '<i class="fa-solid fa-circle-xmark"></i> Error',
+            '<div style="text-align: center; padding: 1rem;">' +
+            '<i class="fa-solid fa-circle-xmark" style="font-size: 3rem; color: #ef4444; margin-bottom: 1rem;"></i>' +
+            '<p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Connection Error</p>' +
+            '<p style="color: #64748b;">' + error.message + '</p>' +
+            '<p style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem;">Check the console for details.</p>' +
+            '</div>',
+            'delete',
+            null
+        );
+    });
+    
+    return false;
+}
+</script>
+}

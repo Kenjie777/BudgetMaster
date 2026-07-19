@@ -1,0 +1,100 @@
+@model List<BudgetMasterFinal.Models.Budget>
+@{
+    ViewData["Title"] = "Budget Allocation";
+    ViewData["PageTitle"] = "Budget Allocation";
+    Layout = "_DashboardLayout";
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="/Budget/Create" class="btn-primary"><i class="fa-solid fa-plus"></i> New Budget</a>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-wallet"></i> All Budgets</div>
+            <div class="card-filters">
+                <input type="text" class="filter-input" id="searchInput" placeholder="Search budgets..." onkeyup="filterTable()" />
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table" id="budgetTable">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Department</th>
+                            <th>Year</th>
+                            <th>Allocated</th>
+                            <th>Used</th>
+                            <th>Usage %</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var b in Model)
+                        {
+                            var pct = b.AllocatedAmount > 0 ? (double)(b.UsedAmount / b.AllocatedAmount * 100) : 0;
+                            var remaining = b.AllocatedAmount - b.UsedAmount;
+                            <tr>
+                                <td>
+                                    <div class="cell-main">@b.Title</div>
+                                    @if (b.Quarter != null) { <div class="cell-sub">@b.Quarter</div> }
+                                </td>
+                                <td>@(b.Department?.Name ?? "—")</td>
+                                <td>@b.FiscalYear</td>
+                                <td>@currency@b.AllocatedAmount.ToString("N0")</td>
+                                <td>@currency@b.UsedAmount.ToString("N0")</td>
+                                <td>
+                                    <div class="progress-wrap">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill @(pct > 90 ? "danger" : pct > 70 ? "warning" : "")" style="width:@(Math.Min(pct, 100))%"></div>
+                                        </div>
+                                        <span class="progress-pct">@pct.ToString("F0")%</span>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge status-@b.Status.ToLower()">@b.Status</span></td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="/Budget/Details/@b.Id" class="btn-icon" title="View"><i class="fa-solid fa-eye"></i></a>
+                                        <a href="/Budget/Edit/@b.Id" class="btn-icon" title="Edit"><i class="fa-solid fa-pen"></i></a>
+                                        <form action="/Budget/Archive/@b.Id" method="post" style="display:inline" onsubmit="return confirm('Archive this budget? You can restore it later from the Archive page.')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-icon warning" title="Archive"><i class="fa-solid fa-box-archive"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state large">
+                    <i class="fa-solid fa-wallet"></i>
+                    <h3>No budgets yet</h3>
+                    <p>Create your first budget to start tracking allocations.</p>
+                    <a href="/Budget/Create" class="btn-primary">Create Budget</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function filterTable() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#budgetTable tbody tr');
+    rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
+    });
+}
+</script>
+}

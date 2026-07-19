@@ -1,0 +1,439 @@
+@model IEnumerable<BudgetMasterFinal.Models.SubscriptionPlan>
+@{
+    ViewData["Title"] = "BudgetMaster - Budget Planning & Forecasting System";
+    Layout = "_Layout";
+}
+
+<!-- Navigation -->
+<nav class="landing-nav" id="landingNav">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <img src="~/images/BudgetMasterLogo1.png" alt="BudgetMaster" class="nav-logo" />
+        </div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#modules">Modules</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#about">About</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="/Account/Login" class="btn-nav-login">Sign In</a>
+            <a href="/Account/Register" class="btn-nav-register">Get Started</a>
+        </div>
+        <button class="nav-mobile-btn" id="mobileNavBtn"><i class="fa-solid fa-bars"></i></button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#features">Features</a>
+        <a href="#modules">Modules</a>
+        <a href="#pricing">Pricing</a>
+        <a href="/Account/Login">Sign In</a>
+        <a href="/Account/Register" class="mobile-cta">Get Started Free</a>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section" id="hero">
+    <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+    <div class="hero-container">
+        <div class="hero-badge"><i class="fa-solid fa-bolt"></i> Next-Gen Financial ERP</div>
+        <h1 class="hero-title">
+            Plan Smarter.<br>
+            <span class="gradient-text">Budget Better.</span><br>
+            Grow Faster.
+        </h1>
+        <p class="hero-subtitle">
+            BudgetMaster is the all-in-one SaaS platform for budget planning, financial forecasting,
+            scenario analysis, and real-time variance tracking — built for modern organizations.
+        </p>
+        <div class="hero-cta">
+            <a href="/Account/Register" class="btn-hero-primary">
+                Start Free Trial <i class="fa-solid fa-arrow-right"></i>
+            </a>
+            <a href="#features" class="btn-hero-secondary">
+                <i class="fa-solid fa-play"></i> See How It Works
+            </a>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <span class="stat-num">500+</span>
+                <span class="stat-label">Companies</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-num">₱2.4B</span>
+                <span class="stat-label">Budgets Managed</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-num">98%</span>
+                <span class="stat-label">Accuracy Rate</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-num">24/7</span>
+                <span class="stat-label">Uptime SLA</span>
+            </div>
+        </div>
+    </div>
+    <div class="hero-dashboard-preview">
+        <div class="preview-card">
+            <div class="preview-header">
+                <div class="preview-dot red"></div>
+                <div class="preview-dot yellow"></div>
+                <div class="preview-dot green"></div>
+                <span class="preview-title">BudgetMaster Dashboard</span>
+            </div>
+            <div class="preview-body">
+                <div class="preview-stats">
+                    <div class="preview-stat-card blue">
+                        <div class="psc-icon"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="psc-info">
+                            <div class="psc-val">₱4.2M</div>
+                            <div class="psc-lbl">Total Budget</div>
+                        </div>
+                    </div>
+                    <div class="preview-stat-card green">
+                        <div class="psc-icon"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="psc-info">
+                            <div class="psc-val">87.4%</div>
+                            <div class="psc-lbl">Efficiency</div>
+                        </div>
+                    </div>
+                    <div class="preview-stat-card purple">
+                        <div class="psc-icon"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="psc-info">
+                            <div class="psc-val">+12.3%</div>
+                            <div class="psc-lbl">YoY Growth</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-chart-area">
+                    <canvas id="previewChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="features">
+    <div class="section-container">
+        <div class="section-badge">Why BudgetMaster?</div>
+        <h2 class="section-title">Everything you need to master your finances</h2>
+        <p class="section-subtitle">A complete ERP suite designed for finance teams who demand precision, speed, and insight.</p>
+
+        <div class="features-grid">
+            <div class="feature-card" data-aos="fade-up">
+                <div class="feature-icon blue"><i class="fa-solid fa-building-columns"></i></div>
+                <h3>Multi-Tenant Architecture</h3>
+                <p>Each company gets fully isolated data. Scale from one team to thousands of organizations with zero data leakage.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-icon green"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3>Role-Based Access Control</h3>
+                <p>SuperAdmin manages the platform. Admin manages company data. Granular permissions ensure the right people see the right data.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-icon purple"><i class="fa-solid fa-chart-bar"></i></div>
+                <h3>Real-Time Analytics</h3>
+                <p>Interactive dashboards with live KPIs, variance charts, and forecast comparisons updated in real-time.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-icon orange"><i class="fa-solid fa-workflow"></i></div>
+                <h3>Approval Workflows</h3>
+                <p>Streamline budget request reviews with multi-step approval flows, comments, and instant email notifications.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="400">
+                <div class="feature-icon teal"><i class="fa-solid fa-cloud"></i></div>
+                <h3>Cloud-Native SaaS</h3>
+                <p>No installation needed. Access from any device, anywhere. Automatic updates and enterprise-grade security included.</p>
+            </div>
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="500">
+                <div class="feature-icon rose"><i class="fa-solid fa-file-export"></i></div>
+                <h3>Comprehensive Audit Trail</h3>
+                <p>Every action is logged. Complete audit trails for compliance, governance, and accountability.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modules Section -->
+<section class="modules-section" id="modules">
+    <div class="section-container">
+        <div class="section-badge">Core ERP Modules</div>
+        <h2 class="section-title">Five powerful modules. One unified platform.</h2>
+
+        <div class="modules-list">
+            <div class="module-item">
+                <div class="module-num">01</div>
+                <div class="module-icon"><i class="fa-solid fa-wallet"></i></div>
+                <div class="module-content">
+                    <h3>Budget Allocation</h3>
+                    <p>Allocate budgets by department, quarter, and fiscal year. Track spending in real-time against allocations with visual dashboards.</p>
+                    <div class="module-tags">
+                        <span>Department Budgets</span>
+                        <span>Quarterly Planning</span>
+                        <span>Spending Tracking</span>
+                    </div>
+                </div>
+                <div class="module-visual blue-card">
+                    <i class="fa-solid fa-wallet fa-3x"></i>
+                    <div class="mcard-stat">₱4.2M</div>
+                    <div class="mcard-label">Allocated</div>
+                </div>
+            </div>
+
+            <div class="module-item reverse">
+                <div class="module-num">02</div>
+                <div class="module-icon"><i class="fa-solid fa-chart-line"></i></div>
+                <div class="module-content">
+                    <h3>Financial Forecasting</h3>
+                    <p>Project future revenue and expenses using Linear, Exponential, or Moving Average methods. Publish forecasts for team-wide visibility.</p>
+                    <div class="module-tags">
+                        <span>Revenue Projection</span>
+                        <span>Expense Modeling</span>
+                        <span>Confidence Scoring</span>
+                    </div>
+                </div>
+                <div class="module-visual green-card">
+                    <i class="fa-solid fa-chart-line fa-3x"></i>
+                    <div class="mcard-stat">+18.4%</div>
+                    <div class="mcard-label">Growth Forecast</div>
+                </div>
+            </div>
+
+            <div class="module-item">
+                <div class="module-num">03</div>
+                <div class="module-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                <div class="module-content">
+                    <h3>Scenario Planning</h3>
+                    <p>Model Best Case, Worst Case, and Baseline scenarios. Adjust revenue and expense parameters to understand financial impacts before they happen.</p>
+                    <div class="module-tags">
+                        <span>Best/Worst Case</span>
+                        <span>Impact Analysis</span>
+                        <span>Custom Scenarios</span>
+                    </div>
+                </div>
+                <div class="module-visual purple-card">
+                    <i class="fa-solid fa-diagram-project fa-3x"></i>
+                    <div class="mcard-stat">3</div>
+                    <div class="mcard-label">Active Scenarios</div>
+                </div>
+            </div>
+
+            <div class="module-item reverse">
+                <div class="module-num">04</div>
+                <div class="module-icon"><i class="fa-solid fa-arrows-left-right-to-line"></i></div>
+                <div class="module-content">
+                    <h3>Variance Analysis</h3>
+                    <p>Compare actual spending against budgeted amounts. Identify over/under spending by department with detailed drill-down reports.</p>
+                    <div class="module-tags">
+                        <span>Budget vs Actual</span>
+                        <span>Dept. Drill-down</span>
+                        <span>Trend Reports</span>
+                    </div>
+                </div>
+                <div class="module-visual orange-card">
+                    <i class="fa-solid fa-arrows-left-right-to-line fa-3x"></i>
+                    <div class="mcard-stat">-₱120K</div>
+                    <div class="mcard-label">Under Budget</div>
+                </div>
+            </div>
+
+            <div class="module-item">
+                <div class="module-num">05</div>
+                <div class="module-icon"><i class="fa-solid fa-check-to-slot"></i></div>
+                <div class="module-content">
+                    <h3>Budget Approval Workflow</h3>
+                    <p>Submit, review, approve or reject budget requests with full audit trails. Multi-level approval support with comments and notifications.</p>
+                    <div class="module-tags">
+                        <span>Multi-Step Approval</span>
+                        <span>Request Tracking</span>
+                        <span>Instant Notify</span>
+                    </div>
+                </div>
+                <div class="module-visual teal-card">
+                    <i class="fa-solid fa-check-to-slot fa-3x"></i>
+                    <div class="mcard-stat">12</div>
+                    <div class="mcard-label">Pending Approvals</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section class="pricing-section" id="pricing">
+    <div class="section-container">
+        <div class="section-badge">Transparent Pricing</div>
+        <h2 class="section-title">Simple plans for every organization</h2>
+        <p class="section-subtitle">All plans include a 14-day free trial. No credit card required.</p>
+
+        <div class="pricing-toggle">
+            <span class="toggle-label">Monthly</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="billingToggle">
+                <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Yearly <span class="save-badge">Save 17%</span></span>
+        </div>
+
+        <div class="pricing-grid">
+            @if (Model != null && Model.Any())
+            {
+                @foreach (var plan in Model)
+                {
+                    var isPopular = plan.Name == "Professional"; // You can add an IsPopular field to the model if needed
+                    var savingsAmount = (plan.MonthlyPrice * 12) - plan.YearlyPrice;
+                    var savingsPercentage = plan.YearlyDiscountPercentage;
+                    
+                    <div class="pricing-card @(isPopular ? "popular" : "")">
+                        @if (isPopular)
+                        {
+                            <div class="popular-badge">Most Popular</div>
+                        }
+                        <div class="plan-icon">
+                            <i class="fa-solid @(plan.Name == "Starter" ? "fa-seedling" : plan.Name == "Professional" ? "fa-rocket" : "fa-crown")"></i>
+                        </div>
+                        <div class="plan-name">@plan.Name</div>
+                        <div class="plan-price">
+                            <span class="price-monthly">₱@plan.MonthlyPrice.ToString("N0")<small>/mo</small></span>
+                            <span class="price-yearly hidden">₱@plan.YearlyPrice.ToString("N0")<small>/yr</small></span>
+                        </div>
+                        <div class="plan-savings hidden">Save ₱@savingsAmount.ToString("N0")/year</div>
+                        <p class="plan-desc">@plan.Description</p>
+                        <ul class="plan-features">
+                            <li><i class="fa-solid fa-check"></i> @(plan.MaxUsers == -1 ? "Unlimited" : $"Up to {plan.MaxUsers}") users</li>
+                            <li><i class="fa-solid fa-check"></i> @(plan.MaxDepartments == -1 ? "Unlimited" : $"Up to {plan.MaxDepartments}") departments</li>
+                            @if (plan.IncludesForecasting)
+                            {
+                                <li><i class="fa-solid fa-check"></i> Financial Forecasting</li>
+                            }
+                            @if (plan.IncludesScenarioPlanning)
+                            {
+                                <li><i class="fa-solid fa-check"></i> Scenario Planning</li>
+                            }
+                            @if (plan.IncludesAdvancedReports)
+                            {
+                                <li><i class="fa-solid fa-check"></i> Advanced Reports</li>
+                            }
+                            @if (plan.IncludesApiAccess)
+                            {
+                                <li><i class="fa-solid fa-check"></i> API Access</li>
+                            }
+                            @if (plan.IncludesCustomBranding)
+                            {
+                                <li><i class="fa-solid fa-check"></i> Custom Branding</li>
+                            }
+                            @if (plan.IncludesPrioritySupport)
+                            {
+                                <li><i class="fa-solid fa-check"></i> Priority Support</li>
+                            }
+                        </ul>
+                        <a href="/Account/Register?plan=@plan.Name" class="@(isPopular ? "btn-plan-primary" : "btn-plan-outline")">
+                            @(plan.Name == "Enterprise" ? "Contact Sales" : "Get Started")
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <!-- Fallback if no plans in database -->
+                <div class="pricing-card">
+                    <p>No subscription plans available at the moment.</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="cta-container">
+        <div class="cta-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        <h2>Ready to transform your financial planning?</h2>
+        <p>Join hundreds of organizations using BudgetMaster to make smarter budget decisions.</p>
+        <div class="cta-buttons">
+            <a href="/Account/Register" class="btn-cta-primary">Start Free Trial</a>
+            <a href="/Account/Login" class="btn-cta-outline">Sign In</a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="landing-footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <img src="~/images/BudgetMasterLogo1.png" alt="BudgetMaster" class="footer-logo" />
+        </div>
+        <p class="footer-desc">Budget Planning & Forecasting System — empowering organizations to plan, forecast, and grow with confidence.</p>
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Support</a>
+            <a href="#">Documentation</a>
+        </div>
+        <p class="footer-copy">© 2025 BudgetMaster. All rights reserved.</p>
+    </div>
+</footer>
+
+@section Scripts {
+<script>
+// Hero preview chart
+const ctx = document.getElementById('previewChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'Budget',
+            data: [420, 450, 480, 460, 510, 540],
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.08)',
+            tension: 0.4,
+            fill: true
+        },{
+            label: 'Actual',
+            data: [380, 410, 430, 420, 480, 490],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16,185,129,0.06)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+            y: { grid: { color: 'rgba(148,163,184,0.1)' }, ticks: { color: '#94a3b8', font: { size: 9 } } }
+        }
+    }
+});
+
+// Billing toggle
+const toggle = document.getElementById('billingToggle');
+toggle.addEventListener('change', function() {
+    document.querySelectorAll('.price-monthly').forEach(el => el.classList.toggle('hidden', this.checked));
+    document.querySelectorAll('.price-yearly').forEach(el => el.classList.toggle('hidden', !this.checked));
+    document.querySelectorAll('.plan-savings').forEach(el => el.classList.toggle('hidden', !this.checked));
+});
+
+// Sticky nav
+window.addEventListener('scroll', () => {
+    document.getElementById('landingNav').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// Mobile nav
+document.getElementById('mobileNavBtn').addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.toggle('open');
+});
+
+// Number counter animation
+const observers = document.querySelectorAll('.stat-num');
+const nums = [500, 2.4, 98, 24];
+</script>
+}

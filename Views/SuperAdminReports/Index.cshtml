@@ -1,0 +1,336 @@
+@model BudgetMasterFinal.Models.PlatformAnalyticsReport
+@{
+    ViewData["Title"] = "Platform Reports";
+    ViewData["PageTitle"] = "Platform Analytics & Reports";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <!-- Page Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 style="margin: 0 0 0.5rem 0; font-size: 1.75rem; font-weight: 700; color: var(--text-primary);">
+                <i class="fa-solid fa-chart-bar"></i> Platform Analytics & Reports
+            </h1>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.9375rem;">
+                Comprehensive SaaS platform metrics, tenant activity, and subscription insights
+            </p>
+        </div>
+        <form action="/SuperAdminReports/ExportPDF" method="post" style="display: inline;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="reportType" value="platform-overview" />
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-file-pdf"></i> Export PDF
+            </button>
+        </form>
+    </div>
+
+    <!-- Platform Overview KPIs -->
+    <div class="kpi-grid" style="margin-bottom: 2rem;">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-building"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Tenants</div>
+                <div class="kpi-value">@Model.TotalTenants</div>
+                <div class="kpi-sub">@Model.ActiveTenants active</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Users</div>
+                <div class="kpi-value">@Model.TotalUsers</div>
+                <div class="kpi-sub">@Model.ActiveUsers active</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-credit-card"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Active Subscriptions</div>
+                <div class="kpi-value">@Model.ActiveSubscriptions</div>
+                <div class="kpi-sub">@Model.ExpiringThisMonth expiring soon</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-peso-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Monthly Revenue</div>
+                <div class="kpi-value">₱@Model.MonthlyRecurringRevenue.ToString("N0")</div>
+                <div class="kpi-sub">MRR</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tenant Growth Metrics -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-chart-line"></i> Tenant Growth Metrics
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-icon"><i class="fa-solid fa-building"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Total Tenants</div>
+                        <div class="kpi-value">@Model.TotalTenants</div>
+                        <div class="kpi-sub">Organizations</div>
+                    </div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Active Tenants</div>
+                        <div class="kpi-value">@Model.ActiveTenants</div>
+                        <div class="kpi-sub">Currently active</div>
+                    </div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-icon"><i class="fa-solid fa-plus-circle"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">New This Month</div>
+                        <div class="kpi-value">@Model.NewTenantsThisMonth</div>
+                        <div class="kpi-sub">New signups</div>
+                    </div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Growth Rate</div>
+                        <div class="kpi-value">@Model.TenantGrowthRate.ToString("F1")%</div>
+                        <div class="kpi-sub">Monthly growth</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Analytics -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-money-bill-trend-up"></i> Revenue Analytics
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Monthly Recurring Revenue</div>
+                        <div class="kpi-value">₱@Model.MonthlyRecurringRevenue.ToString("N0")</div>
+                        <div class="kpi-sub">MRR</div>
+                    </div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Annual Recurring Revenue</div>
+                        <div class="kpi-value">₱@Model.AnnualRecurringRevenue.ToString("N0")</div>
+                        <div class="kpi-sub">ARR</div>
+                    </div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-icon"><i class="fa-solid fa-coins"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Revenue This Month</div>
+                        <div class="kpi-value">₱@Model.TotalRevenueThisMonth.ToString("N0")</div>
+                        <div class="kpi-sub">Current month</div>
+                    </div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Avg Per Tenant</div>
+                        <div class="kpi-value">₱@Model.AverageRevenuePerTenant.ToString("N0")</div>
+                        <div class="kpi-sub">Average revenue</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Status -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-receipt"></i> Subscription Status
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Active Subscriptions</div>
+                        <div class="kpi-value">@Model.ActiveSubscriptions</div>
+                        <div class="kpi-sub">Currently active</div>
+                    </div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Trial Subscriptions</div>
+                        <div class="kpi-value">@Model.TrialSubscriptions</div>
+                        <div class="kpi-sub">In trial period</div>
+                    </div>
+                </div>
+                <div class="kpi-card red">
+                    <div class="kpi-icon"><i class="fa-solid fa-times-circle"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Expired Subscriptions</div>
+                        <div class="kpi-value">@Model.ExpiredSubscriptions</div>
+                        <div class="kpi-sub">Expired</div>
+                    </div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-icon"><i class="fa-solid fa-exclamation-triangle"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Expiring This Month</div>
+                        <div class="kpi-value">@Model.ExpiringThisMonth</div>
+                        <div class="kpi-sub">Needs renewal</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Usage -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-chart-area"></i> System Usage & Activity
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Total Users</div>
+                        <div class="kpi-value">@Model.TotalUsers</div>
+                        <div class="kpi-sub">Platform users</div>
+                    </div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-icon"><i class="fa-solid fa-user-check"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Active Users</div>
+                        <div class="kpi-value">@Model.ActiveUsers</div>
+                        <div class="kpi-sub">Currently active</div>
+                    </div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-icon"><i class="fa-solid fa-user-plus"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">New Users This Month</div>
+                        <div class="kpi-value">@Model.NewUsersThisMonth</div>
+                        <div class="kpi-sub">New registrations</div>
+                    </div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">User Engagement</div>
+                        <div class="kpi-value">@((Model.TotalUsers > 0 ? (decimal)Model.ActiveUsers / Model.TotalUsers * 100 : 0).ToString("F1"))%</div>
+                        <div class="kpi-sub">Active rate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Logs Summary -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-shield-halved"></i> Audit Logs & Security
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="kpi-grid">
+                <div class="kpi-card blue">
+                    <div class="kpi-icon"><i class="fa-solid fa-list"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Total Audit Logs</div>
+                        <div class="kpi-value">@Model.TotalAuditLogs</div>
+                        <div class="kpi-sub">All time</div>
+                    </div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Logs This Month</div>
+                        <div class="kpi-value">@Model.AuditLogsThisMonth</div>
+                        <div class="kpi-sub">Current month</div>
+                    </div>
+                </div>
+                <div class="kpi-card purple">
+                    <div class="kpi-icon"><i class="fa-solid fa-shield-check"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Security Events</div>
+                        <div class="kpi-value">@Model.AuditLogsByAction.Count</div>
+                        <div class="kpi-sub">Event types</div>
+                    </div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Recent Activity</div>
+                        <div class="kpi-value">@(Model.AuditLogsThisMonth > 0 ? "Active" : "None")</div>
+                        <div class="kpi-sub">This month</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Plan Distribution -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-chart-pie"></i> Subscription Plan Distribution
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.SubscriptionsByPlan.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Plan Name</th>
+                            <th style="text-align: right;">Subscriptions</th>
+                            <th style="text-align: right;">Revenue</th>
+                            <th style="text-align: right;">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var plan in Model.SubscriptionsByPlan.OrderByDescending(p => p.Value))
+                        {
+                            var revenue = Model.RevenueByPlan.ContainsKey(plan.Key) ? Model.RevenueByPlan[plan.Key] : 0;
+                            var percentage = Model.TotalSubscriptions > 0 ? (decimal)plan.Value / Model.TotalSubscriptions * 100 : 0;
+                            <tr>
+                                <td style="font-weight: 600;">@plan.Key</td>
+                                <td style="text-align: right;"><span class="status-badge status-active">@plan.Value</span></td>
+                                <td style="text-align: right; font-weight: 600;">₱@revenue.ToString("N0")</td>
+                                <td style="text-align: right;">@percentage.ToString("F1")%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-chart-pie"></i></div>
+                    <h3>No Subscription Data</h3>
+                    <p>No active subscriptions found.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,200 @@
+@model List<BudgetMasterFinal.Models.BudgetRequest>
+@{
+    ViewData["Title"] = "Financial Validation";
+    ViewData["PageTitle"] = "Budget Request Financial Validation";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Awaiting Validation</div>
+                <div class="kpi-value">@Model.Count</div>
+                <div class="kpi-sub">Ready for review</div>
+            </div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Total Value</div>
+                <div class="kpi-value">@Model.Sum(r => r.RequestedAmount).ToString("C0")</div>
+                <div class="kpi-sub">Pending validation</div>
+            </div>
+        </div>
+        <div class="kpi-card teal">
+            <div class="kpi-icon"><i class="fa-solid fa-building"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Departments</div>
+                <div class="kpi-value">@Model.Select(r => r.DepartmentId).Distinct().Count()</div>
+                <div class="kpi-sub">With pending requests</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Operationally Approved</div>
+                <div class="kpi-value">@Model.Count</div>
+                <div class="kpi-sub">Ready for finance review</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-file-invoice-dollar"></i> Requests Ready for Financial Validation</div>
+
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="requests-grid" id="requestsGrid">
+                    @foreach (var r in Model)
+                    {
+                        <div class="req-card">
+                            <div class="req-card-header">
+                                <div class="req-avatar-lg">@r.RequestedByUser?.FirstName?.Substring(0,1)@r.RequestedByUser?.LastName?.Substring(0,1)</div>
+                                <div class="req-card-info">
+                                    <div class="req-card-name">@r.RequestedByUser?.FullName</div>
+                                    <div class="req-card-dept">@(r.Department?.Name ?? "—")</div>
+                                </div>
+                                <span class="status-badge status-operationallyapproved">Ready for Validation</span>
+                            </div>
+                            <div class="req-card-body">
+                                <h4 class="req-card-title">@r.Title</h4>
+                                <div class="req-amount">@r.RequestedAmount.ToString("C")</div>
+                                <div class="req-category"><span>@r.Category</span></div>
+                                @if (r.Justification != null)
+                                {
+                                    <p class="req-justification">@r.Justification</p>
+                                }
+                                <div class="req-date">Submitted @r.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                
+                                @if (r.OperationallyApprovedByUser != null)
+                                {
+                                    <div class="approval-info">
+                                        <div class="approval-header">
+                                            <i class="fa-solid fa-check-circle text-green"></i>
+                                            <strong>Operationally Approved</strong>
+                                        </div>
+                                        <div class="approval-details">
+                                            <div>By: @r.OperationallyApprovedByUser.FullName</div>
+                                            <div>Date: @r.OperationalApprovalDate?.ToString("MMM dd, yyyy")</div>
+                                            @if (!string.IsNullOrEmpty(r.OperationalApprovalNotes))
+                                            {
+                                                <div class="approval-notes">Notes: @r.OperationalApprovalNotes</div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="req-card-actions">
+                                <button class="btn-approve" onclick="openApprovalModal(@r.Id, 'Approved')">
+                                    <i class="fa-solid fa-check"></i> Approve
+                                </button>
+                                <button class="btn-reject" onclick="openApprovalModal(@r.Id, 'Rejected')">
+                                    <i class="fa-solid fa-xmark"></i> Reject
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="empty-state large">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <h3>No Requests Awaiting Validation</h3>
+                    <p>All operationally approved requests have been processed.</p>
+                    <a href="/Budget/AllRequests" class="btn-secondary">View All Requests</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal-overlay" id="approvalModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="modalTitle">Financial Validation</h3>
+            <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form action="/Budget/ApproveRequest" method="post" id="approvalForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="modalId" name="id" />
+            <input type="hidden" id="modalAction" name="action" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Financial Validation Notes</label>
+                    <textarea name="notes" class="form-input form-textarea" rows="4" placeholder="Add financial validation notes, budget compliance checks, policy considerations..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary" id="modalSubmitBtn">Confirm</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.approval-info {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+}
+
+.approval-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    color: #065f46;
+}
+
+.approval-details {
+    font-size: 0.8rem;
+    color: #064e3b;
+    line-height: 1.4;
+}
+
+.approval-notes {
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.status-badge.status-operationallyapproved {
+    background: #dbeafe;
+    color: #1e40af;
+}
+</style>
+
+@section Scripts {
+<script>
+function openApprovalModal(id, action) {
+    document.getElementById('modalId').value = id;
+    document.getElementById('modalAction').value = action;
+    document.getElementById('modalTitle').textContent = action === 'Approved' ? 'Approve Request' : 'Reject Request';
+    document.getElementById('modalSubmitBtn').textContent = action === 'Approved' ? 'Approve' : 'Reject';
+    document.getElementById('modalSubmitBtn').className = action === 'Approved' ? 'btn-primary' : 'btn-danger';
+    document.getElementById('approvalModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('approvalModal').classList.remove('open');
+}
+
+function filterStatus(status) {
+    document.querySelectorAll('.req-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.querySelectorAll('.req-card').forEach(card => {
+        card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
+    });
+}
+</script>
+}

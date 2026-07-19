@@ -1,0 +1,120 @@
+@model IEnumerable<BudgetMasterFinal.Models.Budget>
+@{
+    ViewData["Title"] = "Department Budgets";
+    var department = ViewBag.Department as BudgetMasterFinal.Models.Department;
+}
+
+<div class="dash-container">
+    <div class="kpi-grid">
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="fa-solid fa-wallet"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">BUDGETS</div>
+                <div class="kpi-value">@Model.Count()</div>
+                <div class="kpi-sub">active</div>
+            </div>
+        </div>
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">ALLOCATED</div>
+                <div class="kpi-value">@Model.Sum(b => b.AllocatedAmount).ToString("C0")</div>
+                <div class="kpi-sub">total</div>
+            </div>
+        </div>
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">USED</div>
+                <div class="kpi-value">@Model.Sum(b => b.UsedAmount).ToString("C0")</div>
+                <div class="kpi-sub">allocated</div>
+            </div>
+        </div>
+        <div class="kpi-card @(Model.Sum(b => b.AllocatedAmount - b.UsedAmount) >= 0 ? "teal" : "red")">
+            <div class="kpi-icon"><i class="fa-solid fa-balance-scale"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">REMAINING</div>
+                <div class="kpi-value">@Model.Sum(b => b.AllocatedAmount - b.UsedAmount).ToString("C0")</div>
+                <div class="kpi-sub">available</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-wallet"></i> Budget Allocations</div>
+            <a href="/Budget/Create" class="card-link">New Budget</a>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Budget Title</th>
+                            <th>Fiscal Year</th>
+                            <th>Allocated</th>
+                            <th>Used</th>
+                            <th>Remaining</th>
+                            <th>Usage %</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var budget in Model)
+                        {
+                            var utilizationPercent = budget.AllocatedAmount > 0 ? (double)(budget.UsedAmount / budget.AllocatedAmount * 100) : 0;
+                            <tr>
+                                <td>
+                                    <div class="cell-main">@budget.Title</div>
+                                    @if (!string.IsNullOrEmpty(budget.Description))
+                                    {
+                                        <div class="cell-sub">@budget.Description</div>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="status-badge status-baseline">FY @budget.FiscalYear</span>
+                                    @if (!string.IsNullOrEmpty(budget.Quarter))
+                                    {
+                                        <div class="cell-sub">@budget.Quarter</div>
+                                    }
+                                </td>
+                                <td><strong>@budget.AllocatedAmount.ToString("C")</strong></td>
+                                <td class="text-orange">@budget.UsedAmount.ToString("C")</td>
+                                <td class="@(budget.RemainingAmount >= 0 ? "text-green" : "text-red")">
+                                    @budget.RemainingAmount.ToString("C")
+                                </td>
+                                <td>
+                                    <div class="progress-wrap">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill @(utilizationPercent > 90 ? "danger" : utilizationPercent > 75 ? "warning" : "")" 
+                                                 style="width: @Math.Min(utilizationPercent, 100)%"></div>
+                                        </div>
+                                        <span class="progress-pct">@utilizationPercent.ToString("F1")%</span>
+                                    </div>
+                                </td>
+                                <td><span class="status-badge status-@(budget.Status.ToLower())">@budget.Status</span></td>
+                                <td>
+                                    <div class="action-btns">
+                                        <a href="/Budget/Details/@budget.Id" class="btn-icon" title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-wallet"></i>
+                    <h3>No Budgets</h3>
+                    <p>No budget allocations yet</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,1138 @@
+@model BudgetMasterFinal.Models.ViewModels.AccountSettingsViewModel
+@{
+    ViewData["Title"] = "Account Settings";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="page-header">
+    <div class="page-header-content" style="text-align: center;">
+        <div>
+            <h1 class="page-title">
+                <i class="fa-solid fa-user-gear"></i> Account Settings
+            </h1>
+            <p class="page-subtitle">Manage your personal account information and security settings</p>
+        </div>
+    </div>
+</div>
+
+<div class="settings-container">
+    <!-- Profile Information Card -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="settings-card-title">
+                <i class="fa-solid fa-user"></i>
+                <h2>Profile Information</h2>
+            </div>
+            <p class="settings-card-subtitle">Update your personal information</p>
+        </div>
+        <div class="settings-card-body">
+            <form id="profileForm">
+                @Html.AntiForgeryToken()
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-solid fa-user"></i> First Name
+                        </label>
+                        <input type="text" id="firstName" class="form-input" value="@Model.FirstName" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-solid fa-user"></i> Last Name
+                        </label>
+                        <input type="text" id="lastName" class="form-input" value="@Model.LastName" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" class="form-input" value="@Model.Email" readonly style="background: #f3f4f6; cursor: not-allowed;" />
+                    <small class="form-hint">Email address cannot be changed. Contact your administrator if needed.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-shield-halved"></i> Role
+                    </label>
+                    <input type="text" class="form-input" value="@Model.Role" readonly style="background: #f3f4f6; cursor: not-allowed;" />
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Security Settings Card -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="settings-card-title">
+                <i class="fa-solid fa-lock"></i>
+                <h2>Security Settings</h2>
+            </div>
+            <p class="settings-card-subtitle">Manage your password and security preferences</p>
+        </div>
+        <div class="settings-card-body">
+            <form id="passwordForm">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-key"></i> Current Password
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="password" id="currentPassword" class="form-input" placeholder="Enter current password" required />
+                        <button type="button" class="input-toggle" onclick="togglePasswordVisibility('currentPassword', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-lock"></i> New Password
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="password" id="newPassword" class="form-input" placeholder="Enter new password" required />
+                        <button type="button" class="input-toggle" onclick="togglePasswordVisibility('newPassword', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-hint">Password must be at least 6 characters and contain a number.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-lock"></i> Confirm New Password
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm new password" required />
+                        <button type="button" class="input-toggle" onclick="togglePasswordVisibility('confirmPassword', this)">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-shield-halved"></i> Change Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2FA Settings Card -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="settings-card-title">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+                <h2>2 Factor Auth</h2>
+            </div>
+            <p class="settings-card-subtitle">Enhanced account protection</p>
+        </div>
+        <div class="settings-card-body">
+            <div id="twofa-disabled" class="twofa-state">
+                <div class="twofa-icon-container">
+                    <div class="twofa-icon disabled">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                </div>
+                <h3 class="twofa-status">Disabled</h3>
+                <p class="twofa-description">Add an extra layer of security to your account.</p>
+                <button type="button" class="btn-enable-2fa" onclick="enable2FA()">
+                    <i class="fa-solid fa-shield-halved"></i> Enable 2FA
+                </button>
+            </div>
+
+            <div id="twofa-setup" class="twofa-state" style="display: none;">
+                <div class="twofa-qr-container">
+                    <div id="qrcode"></div>
+                    <p class="twofa-scan-text">Scan QR Code</p>
+                </div>
+
+                <div class="twofa-setup-guide">
+                    <h4 class="setup-guide-title">Setup Guide</h4>
+                    <ol class="setup-steps">
+                        <li>Download <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank">Google Authenticator</a> or <a href="https://www.microsoft.com/en-us/security/mobile-authenticator-app" target="_blank">Microsoft Authenticator</a>.</li>
+                        <li>Scan the QR code or enter the key manually.</li>
+                        <li>Enter the 6-digit verification code below.</li>
+                    </ol>
+                </div>
+
+                <div class="twofa-manual-key">
+                    <p class="manual-key-label">OR ENTER MANUALLY</p>
+                    <div class="manual-key-box">
+                        <span id="manualKey">7NLH KZ4K TA25 3L5E Q3TQ JCSR 3FRX EHF6</span>
+                        <button type="button" class="btn-copy" onclick="copyManualKey()">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="twofa-verify-code">
+                    <div class="code-input-container">
+                        <input type="text" maxlength="1" class="code-digit" data-index="0" />
+                        <input type="text" maxlength="1" class="code-digit" data-index="1" />
+                        <input type="text" maxlength="1" class="code-digit" data-index="2" />
+                        <input type="text" maxlength="1" class="code-digit" data-index="3" />
+                        <input type="text" maxlength="1" class="code-digit" data-index="4" />
+                        <input type="text" maxlength="1" class="code-digit" data-index="5" />
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-primary" onclick="verifyCode()">
+                        <i class="fa-solid fa-check"></i> Verify Code
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="cancel2FA()">
+                        <i class="fa-solid fa-times"></i> Cancel
+                    </button>
+                </div>
+            </div>
+
+            <div id="twofa-enabled" class="twofa-state" style="display: none;">
+                <div class="twofa-icon-container">
+                    <div class="twofa-icon enabled">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </div>
+                <h3 class="twofa-status">Enabled</h3>
+                <p class="twofa-description">Your account is protected with two-factor authentication.</p>
+                <button type="button" class="btn-danger" onclick="disable2FA()">
+                    <i class="fa-solid fa-shield-xmark"></i> Disable 2FA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Management Card -->
+    <div class="settings-card">
+        <div class="settings-card-header">
+            <div class="settings-card-title">
+                <i class="fa-solid fa-clock"></i>
+                <h2>Session Management</h2>
+            </div>
+            <p class="settings-card-subtitle">Manage your active sessions and login history</p>
+        </div>
+        <div class="settings-card-body">
+            <div class="session-info">
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fa-solid fa-calendar-check"></i> Account Created
+                    </div>
+                    <div class="info-value">@Model.CreatedAt.ToString("MMMM dd, yyyy")</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fa-solid fa-clock"></i> Last Login
+                    </div>
+                    <div class="info-value">
+                        @if (Model.LastLoginAt.HasValue)
+                        {
+                            @Model.LastLoginAt.Value.ToString("MMMM dd, yyyy hh:mm tt")
+                        }
+                        else
+                        {
+                            <span>Never</span>
+                        }
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">
+                        <i class="fa-solid fa-circle-check"></i> Account Status
+                    </div>
+                    <div class="info-value">
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge badge-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-danger">Inactive</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions" style="margin-top: 24px;">
+                <button type="button" class="btn-danger" onclick="terminateAllSessions()">
+                    <i class="fa-solid fa-right-from-bracket"></i> Terminate All Sessions
+                </button>
+                <a href="/AccountSettings/ActivityLog" class="btn-secondary">
+                    <i class="fa-solid fa-list"></i> View Activity Log
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+.settings-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.settings-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.settings-card-header {
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.settings-card-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.settings-card-title i {
+    color: #1e3a5f;
+    font-size: 24px;
+}
+
+.settings-card-title h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.settings-card-subtitle {
+    margin: 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.settings-card-body {
+    padding: 24px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-label i {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #1e3a5f;
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper .form-input {
+    padding-right: 40px;
+}
+
+.input-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s;
+}
+
+.input-toggle:hover {
+    color: #1e3a5f;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #1e3a5f;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #152d4a;
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+.session-info {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.info-label i {
+    color: #9ca3af;
+}
+
+.info-value {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* 2FA Styles */
+.twofa-state {
+    text-align: center;
+}
+
+.twofa-icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.twofa-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+}
+
+.twofa-icon.disabled {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.twofa-icon.enabled {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.twofa-status {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.twofa-description {
+    color: #9ca3af;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.btn-enable-2fa {
+    background: #2563eb;
+    color: white;
+    padding: 12px 32px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-enable-2fa:hover {
+    background: #1d4ed8;
+}
+
+.twofa-qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+#qrcode {
+    padding: 16px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.twofa-scan-text {
+    margin-top: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.twofa-setup-guide {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.setup-guide-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.setup-steps {
+    margin: 0;
+    padding-left: 20px;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.setup-steps li {
+    margin-bottom: 8px;
+}
+
+.setup-steps a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.setup-steps a:hover {
+    text-decoration: underline;
+}
+
+.twofa-manual-key {
+    margin-bottom: 32px;
+}
+
+.manual-key-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #9ca3af;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.manual-key-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #f3f4f6;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    letter-spacing: 2px;
+}
+
+.btn-copy {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-copy:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.twofa-verify-code {
+    margin-bottom: 24px;
+}
+
+.code-input-container {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.code-digit {
+    width: 56px;
+    height: 64px;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.code-digit:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.status-badge-inactive {
+    background: #fed7aa;
+    color: #ea580c;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    position: absolute;
+    top: 24px;
+    right: 24px;
+}
+
+@@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-primary, .btn-secondary, .btn-danger {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .code-digit {
+        width: 48px;
+        height: 56px;
+        font-size: 24px;
+    }
+    
+    .code-input-container {
+        gap: 8px;
+    }
+}
+</style>
+}
+
+@section Scripts {
+<script>
+function togglePasswordVisibility(inputId, button) {
+    const input = document.getElementById(inputId);
+    const icon = button.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Profile Form Submission
+document.getElementById('profileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+    
+    if (!firstName || !lastName) {
+        showNotification('Please fill in all fields', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/AccountSettings/UpdateProfile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `firstName=${encodeURIComponent(firstName)}&lastName=${encodeURIComponent(lastName)}&__RequestVerificationToken=${encodeURIComponent(token)}`
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('An error occurred. Please try again.', 'error');
+    }
+});
+
+// Password Form Submission
+document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const token = document.querySelectorAll('input[name="__RequestVerificationToken"]')[1].value;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showNotification('Please fill in all password fields', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('New password and confirmation do not match', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showNotification('Password must be at least 6 characters long', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/AccountSettings/ChangePassword', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `currentPassword=${encodeURIComponent(currentPassword)}&newPassword=${encodeURIComponent(newPassword)}&confirmPassword=${encodeURIComponent(confirmPassword)}&__RequestVerificationToken=${encodeURIComponent(token)}`
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            // Clear password fields
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('An error occurred. Please try again.', 'error');
+    }
+});
+
+// Terminate All Sessions
+async function terminateAllSessions() {
+    if (!confirm('This will log you out from all devices. Are you sure you want to continue?')) {
+        return;
+    }
+    
+    const token = document.querySelectorAll('input[name="__RequestVerificationToken"]')[0].value;
+    
+    try {
+        const response = await fetch('/AccountSettings/TerminateAllSessions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `__RequestVerificationToken=${encodeURIComponent(token)}`
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            if (result.redirect) {
+                setTimeout(() => {
+                    window.location.href = result.redirect;
+                }, 1500);
+            }
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('An error occurred. Please try again.', 'error');
+    }
+}
+
+// Notification System
+function showNotification(message, type) {
+    // Remove existing notifications
+    const existing = document.querySelector('.notification');
+    if (existing) {
+        existing.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 4000);
+}
+
+// 2FA Functions
+let currentAuthKey = '';
+let currentOtpauthUrl = '';
+
+// Check 2FA status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    check2FAStatus();
+});
+
+async function check2FAStatus() {
+    try {
+        const response = await fetch('/AccountSettings/Get2FAStatus');
+        const result = await response.json();
+        
+        if (result.success && result.enabled) {
+            document.getElementById('twofa-disabled').style.display = 'none';
+            document.getElementById('twofa-enabled').style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error checking 2FA status:', error);
+    }
+}
+
+async function enable2FA() {
+    const token = document.querySelectorAll('input[name="__RequestVerificationToken"]')[0].value;
+    
+    try {
+        const response = await fetch('/AccountSettings/Enable2FA', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `__RequestVerificationToken=${encodeURIComponent(token)}`
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            currentAuthKey = result.key;
+            currentOtpauthUrl = result.otpauthUrl;
+            
+            document.getElementById('twofa-disabled').style.display = 'none';
+            document.getElementById('twofa-setup').style.display = 'block';
+            
+            // Update manual key display
+            document.getElementById('manualKey').textContent = result.formattedKey;
+            
+            // Generate QR code
+            generateQRCode(result.otpauthUrl);
+            
+            // Setup code input handlers
+            setupCodeInputs();
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('An error occurred. Please try again.', 'error');
+    }
+}
+
+function cancel2FA() {
+    document.getElementById('twofa-setup').style.display = 'none';
+    document.getElementById('twofa-disabled').style.display = 'block';
+    
+    // Clear code inputs
+    document.querySelectorAll('.code-digit').forEach(input => input.value = '');
+}
+
+async function disable2FA() {
+    if (!confirm('Are you sure you want to disable two-factor authentication? This will make your account less secure.')) {
+        return;
+    }
+    
+    const token = document.querySelectorAll('input[name="__RequestVerificationToken"]')[0].value;
+    
+    try {
+        const response = await fetch('/AccountSettings/Disable2FA', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `__RequestVerificationToken=${encodeURIComponent(token)}`
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            document.getElementById('twofa-enabled').style.display = 'none';
+            document.getElementById('twofa-disabled').style.display = 'block';
+            showNotification(result.message, 'success');
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('An error occurred. Please try again.', 'error');
+    }
+}
+
+function generateQRCode(otpauthUrl) {
+    const qrcodeContainer = document.getElementById('qrcode');
+    qrcodeContainer.innerHTML = ''; // Clear previous QR code
+    
+    new QRCode(qrcodeContainer, {
+        text: otpauthUrl,
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+}
+
+function copyManualKey() {
+    const keyText = document.getElementById('manualKey').textContent;
+    const cleanKey = keyText.replace(/\s/g, '');
+    
+    navigator.clipboard.writeText(cleanKey).then(() => {
+        showNotification('Key copied to clipboard!', 'success');
+    }).catch(() => {
+        showNotification('Failed to copy key', 'error');
+    });
+}
+
+function setupCodeInputs() {
+    const inputs = document.querySelectorAll('.code-digit');
+    
+    inputs.forEach((input, index) => {
+        // Clear previous event listeners by cloning
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+    });
+    
+    // Re-query after cloning
+    const freshInputs = document.querySelectorAll('.code-digit');
+    
+    freshInputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+            const value = e.target.value;
+            
+            // Only allow numbers
+            if (!/^\d$/.test(value)) {
+                e.target.value = '';
+                return;
+            }
+            
+            // Move to next input
+            if (value && index < freshInputs.length - 1) {
+                freshInputs[index + 1].focus();
+            }
+        });
+        
+        input.addEventListener('keydown', (e) => {
+            // Handle backspace
+            if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                freshInputs[index - 1].focus();
+            }
+            
+            // Handle paste
+            if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                navigator.clipboard.readText().then(text => {
+                    const digits = text.replace(/\D/g, '').slice(0, 6);
+                    digits.split('').forEach((digit, i) => {
+                        if (freshInputs[i]) {
+                            freshInputs[i].value = digit;
+                        }
+                    });
+                    if (digits.length === 6) {
+                        freshInputs[5].focus();
+                    }
+                });
+            }
+        });
+    });
+}
+
+async function verifyCode() {
+    const inputs = document.querySelectorAll('.code-digit');
+    const code = Array.from(inputs).map(input => input.value).join('');
+    
+    if (code.length !== 6) {
+        showNotification('Please enter all 6 digits', 'error');
+        return;
+    }
+    
+    const token = document.querySelectorAll('input[name="__RequestVerificationToken"]')[0].value;
+    
+    try {
+        const response = await fetch('/AccountSettings/Verify2FA', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `code=${encodeURIComponent(code)}&__RequestVerificationToken=${encodeURIComponent(token)}`
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            
+            setTimeout(() => {
+                document.getElementById('twofa-setup').style.display = 'none';
+                document.getElementById('twofa-enabled').style.display = 'block';
+                
+                // Clear code inputs
+                inputs.forEach(input => input.value = '');
+            }, 1500);
+        } else {
+            showNotification(result.message, 'error');
+            // Clear code inputs on error
+            inputs.forEach(input => input.value = '');
+            inputs[0].focus();
+        }
+    } catch (error) {
+        showNotification('An error occurred. Please try again.', 'error');
+    }
+}
+</script>
+
+<!-- QRCode.js Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-success {
+    background: #10b981;
+    color: white;
+}
+
+.notification-error {
+    background: #dc2626;
+    color: white;
+}
+
+.notification i {
+    font-size: 20px;
+}
+</style>
+}

@@ -1,0 +1,273 @@
+@{
+    ViewData["Title"] = "Variance Analysis";
+    ViewData["PageTitle"] = "Variance Analysis";
+    Layout = "_DashboardLayout";
+    var budgets = ViewBag.Budgets as List<BudgetMasterFinal.Models.Budget> ?? new();
+    var actuals = ViewBag.Actuals as List<BudgetMasterFinal.Models.ActualTransaction> ?? new();
+    decimal totalAllocated = ViewBag.TotalAllocated ?? 0;
+    decimal totalUsed = ViewBag.TotalUsed ?? 0;
+    decimal totalActualSpend = ViewBag.TotalActualSpend ?? 0;
+    decimal totalVariance = ViewBag.TotalVariance ?? 0;
+    int year = ViewBag.Year ?? DateTime.Now.Year;
+    
+    var user = await UserManager.GetUserAsync(User);
+    var currency = user?.TenantId.HasValue == true ? await CurrencyService.GetCurrencySymbolAsync(user.TenantId.Value) : "₱";
+}
+
+<div class="dash-container">
+    <!-- Page Header with Year Selector -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <form method="get" style="display: flex; align-items: center; gap: 0.75rem;">
+            <label style="font-weight: 600; color: var(--text-primary); font-size: 0.9375rem;">Fiscal Year:</label>
+            <select name="year" class="form-input" style="width: 120px; padding: 0.5rem 0.75rem;" onchange="this.form.submit()">
+                @for (int y = DateTime.Now.Year + 1; y >= DateTime.Now.Year - 3; y--)
+                {
+                    if (y == year) { <option value="@y" selected>@y</option> }
+                    else { <option value="@y">@y</option> }
+                }
+            </select>
+        </form>
+    </div>
+
+    <!-- Summary KPIs -->
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="fa-solid fa-wallet"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Allocated Budget</div>
+                <div class="kpi-value">@currency@totalAllocated.ToString("N0")</div>
+                <div class="kpi-sub">Planning data</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card purple">
+            <div class="kpi-icon"><i class="fa-solid fa-check-circle"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Used Amount</div>
+                <div class="kpi-value">@currency@totalUsed.ToString("N0")</div>
+                <div class="kpi-sub">Committed budget</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card orange">
+            <div class="kpi-icon"><i class="fa-solid fa-coins"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Actual Spend</div>
+                <div class="kpi-value">@currency@totalActualSpend.ToString("N0")</div>
+                <div class="kpi-sub">Recorded expenses</div>
+            </div>
+        </div>
+        
+        <div class="kpi-card @(totalVariance >= 0 ? "green" : "red")">
+            <div class="kpi-icon"><i class="fa-solid fa-@(totalVariance >= 0 ? "arrow-trend-down" : "arrow-trend-up")"></i></div>
+            <div class="kpi-info">
+                <div class="kpi-label">Variance</div>
+                <div class="kpi-value">@(totalVariance >= 0 ? "+" : "-")@currency@Math.Abs(totalVariance).ToString("N0")</div>
+                <div class="kpi-sub">@(totalVariance >= 0 ? "Under budget" : "Over budget")</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Breakdown -->
+    <div class="dash-card">
+        <div class="dash-card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-sitemap"></i> Department Variance Analysis — FY @year
+            </div>
+            <div>
+                <a href="/Variance/Transactions" class="btn-primary">
+                    <i class="fa-solid fa-receipt"></i> View Transactions
+                </a>
+            </div>
+        </div>
+        <div class="dash-card-body">
+            @if (budgets.Any())
+            {
+                <div class="table-responsive">
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Department / Budget</th>
+                            <th style="text-align: right;">Allocated</th>
+                            <th style="text-align: right;">Used</th>
+                            <th style="text-align: right;">Actual</th>
+                            <th style="text-align: right;">Variance</th>
+                            <th style="text-align: center;">Progress</th>
+                            <th style="text-align: center;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var b in budgets)
+                        {
+                            var variance = b.VarianceAmount;
+                            var spendPct = b.AllocatedAmount > 0 ? (double)(b.ActualSpend / b.AllocatedAmount * 100) : 0;
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">
+                                        @(b.Department?.Name ?? b.Title)
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(b.Description))
+                                    {
+                                        <div style="font-size: 0.8125rem; color: var(--text-muted);">@b.Description</div>
+                                    }
+                                </td>
+                                <td style="text-align: right; font-weight: 500; color: var(--text-primary);">
+                                    @currency@b.AllocatedAmount.ToString("N0")
+                                </td>
+                                <td style="text-align: right; font-weight: 500; color: #9333ea;">
+                                    @currency@b.UsedAmount.ToString("N0")
+                                </td>
+                                <td style="text-align: right; font-weight: 600; color: #f97316;">
+                                    @currency@b.ActualSpend.ToString("N0")
+                                </td>
+                                <td style="text-align: right; font-weight: 600; color: @(variance >= 0 ? "#10b981" : "#ef4444");">
+                                    @(variance >= 0 ? "+" : "")@currency@variance.ToString("N0")
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: @(Math.Min(spendPct, 100))%; background: @(spendPct > 100 ? "#ef4444" : spendPct > 80 ? "#f59e0b" : "#10b981");"></div>
+                                        </div>
+                                        <span style="font-size: 0.8125rem; font-weight: 600; min-width: 40px; text-align: right; color: var(--text-primary);">
+                                            @spendPct.ToString("F0")%
+                                        </span>
+                                    </div>
+                                </td>
+                                <td style="text-align: center;">
+                                    @if (spendPct > 100)
+                                    {
+                                        <span class="badge badge-danger">Over Budget</span>
+                                    }
+                                    else if (spendPct > 80)
+                                    {
+                                        <span class="badge badge-warning">At Risk</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">On Track</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td style="font-weight: 700; font-size: 0.9375rem;">TOTAL</td>
+                            <td style="text-align: right; font-weight: 700; color: var(--text-primary);">
+                                @currency@totalAllocated.ToString("N0")
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: #9333ea;">
+                                @currency@totalUsed.ToString("N0")
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: #f97316;">
+                                @currency@totalActualSpend.ToString("N0")
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: @(totalVariance >= 0 ? "#10b981" : "#ef4444");">
+                                @(totalVariance >= 0 ? "+" : "")@currency@totalVariance.ToString("N0")
+                            </td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <h3>No Budget Data Available</h3>
+                    <p>Create a budget for FY @year to start tracking variance analysis.</p>
+                    <a href="/Budget/Create" class="btn-primary">
+                        <i class="fa-solid fa-plus"></i> Create Budget
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Progress Bar */
+    .progress-bar {
+        flex: 1;
+        max-width: 100px;
+        height: 8px;
+        background: var(--bg-secondary);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+        border-radius: 4px;
+    }
+    
+    /* Badges */
+    .badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+    
+    .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+    }
+    
+    .empty-state h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+        color: var(--text-primary);
+    }
+    
+    .empty-state p {
+        margin: 0 0 1.5rem 0;
+        color: var(--text-muted);
+        font-size: 0.9375rem;
+    }
+    
+    /* Table Responsive */
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    /* Table Footer */
+    .dash-table tfoot tr {
+        background: var(--bg-secondary);
+        border-top: 2px solid var(--border-color);
+    }
+</style>

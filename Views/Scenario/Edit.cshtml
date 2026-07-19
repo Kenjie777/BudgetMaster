@@ -1,0 +1,68 @@
+@model BudgetMasterFinal.Models.ScenarioPlan
+@{
+    ViewData["Title"] = "Edit Scenario";
+    ViewData["PageTitle"] = "Edit Scenario Plan";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-pen"></i>
+            <h2>Edit Scenario</h2>
+        </div>
+        <form asp-action="Edit" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            <div class="erp-form-grid">
+                <div class="form-group span-2">
+                    <label class="form-label">Scenario Name</label>
+                    <input asp-for="Name" class="form-input" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Scenario Type</label>
+                    <select asp-for="ScenarioType" class="form-input form-select">
+                        <option value="Baseline">Baseline</option>
+                        <option value="BestCase">Best Case</option>
+                        <option value="WorstCase">Worst Case</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fiscal Year</label>
+                    <input asp-for="FiscalYear" type="number" class="form-input" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Base Revenue (₱)</label>
+                    <input asp-for="BaseRevenue" type="number" class="form-input" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Base Expenses (₱)</label>
+                    <input asp-for="BaseExpenses" type="number" class="form-input" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Revenue Adj. (%)</label>
+                    <input asp-for="RevenueAdjustmentPercent" type="number" class="form-input" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Expense Adj. (%)</label>
+                    <input asp-for="ExpenseAdjustmentPercent" type="number" class="form-input" step="0.01" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" class="form-input form-select">
+                        <option value="Active">Active</option>
+                        <option value="Archived">Archived</option>
+                    </select>
+                </div>
+                <div class="form-group span-2">
+                    <label class="form-label">Description</label>
+                    <textarea asp-for="Description" class="form-input form-textarea" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Scenario/Index" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary"><i class="fa-solid fa-save"></i> Update</button>
+            </div>
+        </form>
+    </div>
+</div>

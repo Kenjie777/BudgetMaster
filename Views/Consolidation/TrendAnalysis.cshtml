@@ -1,0 +1,244 @@
+@model List<BudgetMasterFinal.Controllers.YearlyConsolidation>
+@{
+    ViewData["Title"] = "Trend Analysis";
+    ViewData["PageTitle"] = "Multi-Year Trend Analysis";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="page-actions" style="margin-bottom: 2rem;">
+        <a href="/Consolidation/Index" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Consolidation
+        </a>
+    </div>
+
+    <!-- Multi-Year Trend Chart -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-chart-line"></i> Multi-Year Budget Trends</div>
+        </div>
+        <div class="card-body">
+            <canvas id="trendChart" style="max-height: 400px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Growth Rate Chart -->
+    <div class="dash-card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-arrow-trend-up"></i> Year-over-Year Growth Rate</div>
+        </div>
+        <div class="card-body">
+            <canvas id="growthChart" style="max-height: 300px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Yearly Comparison Table -->
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-table"></i> Year-over-Year Financial Comparison</div>
+        </div>
+        <div class="card-body">
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th>Fiscal Year</th>
+                        <th>Allocated</th>
+                        <th>Used</th>
+                        <th>Actual Spend</th>
+                        <th>Variance</th>
+                        <th>Revenue</th>
+                        <th>Expenses</th>
+                        <th>Net Income</th>
+                        <th>Growth Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var year in Model.OrderByDescending(y => y.Year))
+                    {
+                        <tr>
+                            <td><strong>FY @year.Year</strong></td>
+                            <td>₱@year.TotalAllocated.ToString("N0")</td>
+                            <td class="text-purple">₱@year.TotalUsed.ToString("N0")</td>
+                            <td class="text-orange">₱@year.TotalActualSpend.ToString("N0")</td>
+                            <td class="@(year.TotalVariance >= 0 ? "text-green" : "text-red") fw-bold">
+                                @(year.TotalVariance >= 0 ? "+" : "")₱@year.TotalVariance.ToString("N0")
+                            </td>
+                            <td class="text-green fw-bold">₱@year.TotalRevenue.ToString("N0")</td>
+                            <td class="text-red fw-bold">₱@year.TotalExpenses.ToString("N0")</td>
+                            <td class="@(year.NetIncome >= 0 ? "text-green" : "text-red") fw-bold">
+                                @(year.NetIncome >= 0 ? "+" : "")₱@year.NetIncome.ToString("N0")
+                            </td>
+                            <td class="@(year.AverageGrowthRate >= 0 ? "text-green" : "text-red") fw-bold">
+                                @(year.AverageGrowthRate >= 0 ? "+" : "")@year.AverageGrowthRate.ToString("F1")%
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- Key Insights -->
+            @if (Model.Count >= 2)
+            {
+                var latestYear = Model.OrderByDescending(y => y.Year).First();
+                var previousYear = Model.OrderByDescending(y => y.Year).Skip(1).First();
+                var allocatedGrowth = previousYear.TotalAllocated > 0 
+                    ? ((latestYear.TotalAllocated - previousYear.TotalAllocated) / previousYear.TotalAllocated) * 100 
+                    : 0;
+                var revenueGrowth = previousYear.TotalRevenue > 0 
+                    ? ((latestYear.TotalRevenue - previousYear.TotalRevenue) / previousYear.TotalRevenue) * 100 
+                    : 0;
+                
+                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: 8px;">
+                    <h4 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 600;">
+                        <i class="fa-solid fa-lightbulb"></i> Key Insights
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Budget Growth (YoY)</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: @(allocatedGrowth >= 0 ? "var(--success)" : "var(--danger)");">
+                                @(allocatedGrowth >= 0 ? "+" : "")@allocatedGrowth.ToString("F1")%
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Revenue Growth (YoY)</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: @(revenueGrowth >= 0 ? "var(--success)" : "var(--danger)");">
+                                @(revenueGrowth >= 0 ? "+" : "")@revenueGrowth.ToString("F1")%
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Average Growth Rate</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);">
+                                @Model.Average(y => y.AverageGrowthRate).ToString("F1")%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const years = @Html.Raw(Json.Serialize(Model.Select(y => "FY " + y.Year)));
+    const allocated = @Html.Raw(Json.Serialize(Model.Select(y => y.TotalAllocated)));
+    const actualSpend = @Html.Raw(Json.Serialize(Model.Select(y => y.TotalActualSpend)));
+    const revenue = @Html.Raw(Json.Serialize(Model.Select(y => y.TotalRevenue)));
+    const expenses = @Html.Raw(Json.Serialize(Model.Select(y => y.TotalExpenses)));
+    const growthRates = @Html.Raw(Json.Serialize(Model.Select(y => y.AverageGrowthRate)));
+
+    // Trend Chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: years,
+            datasets: [
+                {
+                    label: 'Allocated Budget',
+                    data: allocated,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Actual Spend',
+                    data: actualSpend,
+                    borderColor: 'rgb(251, 146, 60)',
+                    backgroundColor: 'rgba(251, 146, 60, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Revenue',
+                    data: revenue,
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Expenses',
+                    data: expenses,
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Multi-Year Financial Trends'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Growth Rate Chart
+    const growthCtx = document.getElementById('growthChart').getContext('2d');
+    new Chart(growthCtx, {
+        type: 'bar',
+        data: {
+            labels: years,
+            datasets: [{
+                label: 'Average Growth Rate (%)',
+                data: growthRates,
+                backgroundColor: growthRates.map(rate => 
+                    rate >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+                ),
+                borderColor: growthRates.map(rate => 
+                    rate >= 0 ? 'rgb(16, 185, 129)' : 'rgb(239, 68, 68)'
+                ),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Year-over-Year Growth Rate'
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+}
+
+<style>
+    .text-purple { color: #9333ea; font-weight: 600; }
+    .text-orange { color: var(--warning); font-weight: 600; }
+</style>

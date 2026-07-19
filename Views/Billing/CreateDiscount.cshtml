@@ -1,0 +1,351 @@
+@model BudgetMasterFinal.Models.BillingDiscount
+@{
+    ViewData["Title"] = "Create Discount";
+    ViewData["PageTitle"] = "Create Discount";
+    Layout = "_DashboardLayout";
+}
+
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="@Url.Action("Discounts")" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Discounts
+        </a>
+    </div>
+
+    <div class="form-card">
+        <div class="form-card-header">
+            <i class="fa-solid fa-tags"></i>
+            <h2>Create New Discount</h2>
+            <p>Set up a new discount code or promotional offer for your customers</p>
+        </div>
+        
+        <form asp-action="CreateDiscount" method="post" class="erp-form">
+            @Html.AntiForgeryToken()
+            
+            <div class="erp-form-grid">
+                <div class="form-group">
+                    <label asp-for="Code">Discount Code</label>
+                    <input asp-for="Code" class="form-input" placeholder="e.g., SAVE20, WELCOME50" required />
+                    <span asp-validation-for="Code" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Name">Display Name</label>
+                    <input asp-for="Name" class="form-input" placeholder="e.g., Welcome Discount" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group span-2">
+                <label asp-for="Description">Description</label>
+                <textarea asp-for="Description" class="form-input form-textarea" rows="3" placeholder="Describe the discount offer and its benefits"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="erp-form-grid">
+                <div class="form-group">
+                    <label asp-for="DiscountType">Discount Type</label>
+                    <select asp-for="DiscountType" class="form-input form-select" id="discountType" required>
+                        <option value="">Select discount type...</option>
+                        <option value="Percentage">Percentage Off</option>
+                        <option value="Fixed">Fixed Amount Off</option>
+                        <option value="FreeTrial">Free Trial Extension</option>
+                    </select>
+                    <span asp-validation-for="DiscountType" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="DiscountValue">Discount Value</label>
+                    <div class="input-with-icon">
+                        <input asp-for="DiscountValue" class="form-input" type="number" step="0.01" min="0" placeholder="0" required />
+                        <span class="input-icon" id="discountUnit">%</span>
+                    </div>
+                    <span asp-validation-for="DiscountValue" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="erp-form-grid">
+                <div class="form-group">
+                    <label asp-for="ValidFrom">Valid From (Optional)</label>
+                    <input asp-for="ValidFrom" class="form-input" type="datetime-local" />
+                    <span asp-validation-for="ValidFrom" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="ValidUntil">Valid Until (Optional)</label>
+                    <input asp-for="ValidUntil" class="form-input" type="datetime-local" />
+                    <span asp-validation-for="ValidUntil" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="erp-form-grid">
+                <div class="form-group">
+                    <label asp-for="MaxUsageCount">Maximum Usage Count</label>
+                    <input asp-for="MaxUsageCount" class="form-input" type="number" min="1" placeholder="Unlimited" />
+                    <span asp-validation-for="MaxUsageCount" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="MaxUsagePerTenant">Max Usage Per Customer</label>
+                    <input asp-for="MaxUsagePerTenant" class="form-input" type="number" min="1" placeholder="Unlimited" />
+                    <span asp-validation-for="MaxUsagePerTenant" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="erp-form-grid">
+                <div class="form-group">
+                    <label asp-for="MinimumOrderAmount">Minimum Order Amount (₱)</label>
+                    <input asp-for="MinimumOrderAmount" class="form-input" type="number" step="0.01" min="0" placeholder="0.00" />
+                    <span asp-validation-for="MinimumOrderAmount" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Status">Status</label>
+                    <select asp-for="Status" class="form-input form-select">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group span-2">
+                <label asp-for="ApplicableTo">Applicable To</label>
+                <select asp-for="ApplicableTo" class="form-input form-select" id="applicableTo">
+                    <option value="AllPlans">All Subscription Plans</option>
+                    <option value="SpecificPlans">Specific Plans Only</option>
+                    <option value="NewCustomers">New Customers Only</option>
+                </select>
+            </div>
+
+            <div class="form-group span-2" id="planSelection" style="display: none;">
+                <label>Select Applicable Plans</label>
+                <div class="plan-selection-grid">
+                    @if (ViewBag.Plans != null)
+                    {
+                        @foreach (var plan in ViewBag.Plans as List<BudgetMasterFinal.Models.SubscriptionPlan>)
+                        {
+                            <div class="plan-option">
+                                <input type="checkbox" name="selectedPlanIds" value="@plan.Id" id="plan_@plan.Id" class="plan-checkbox" />
+                                <label for="plan_@plan.Id" class="plan-label">
+                                    <div class="plan-name">@plan.Name</div>
+                                    <div class="plan-price">₱@plan.MonthlyPrice.ToString("N0")/month</div>
+                                </label>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="fa-solid fa-plus"></i> Create Discount
+                </button>
+                <a href="@Url.Action("Discounts")" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.input-with-icon {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.875rem;
+    pointer-events: none;
+}
+
+.plan-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.plan-option {
+    position: relative;
+}
+
+.plan-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.plan-label {
+    display: block;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+
+.plan-label:hover {
+    border-color: #6366f1;
+    background: #f8fafc;
+}
+
+.plan-checkbox:checked + .plan-label {
+    border-color: #6366f1;
+    background: #eff6ff;
+}
+
+.plan-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.plan-price {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.guidelines-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.guideline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.guideline-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.guideline-icon.blue {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.guideline-icon.green {
+    background: #f0fdf4;
+    color: #10b981;
+}
+
+.guideline-icon.orange {
+    background: #fff7ed;
+    color: #f97316;
+}
+
+.guideline-icon.purple {
+    background: #faf5ff;
+    color: #8b5cf6;
+}
+
+.guideline-content h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.guideline-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+@@media (max-width: 768px) {
+    .guidelines-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .plan-selection-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const discountType = document.getElementById('discountType');
+    const discountUnit = document.getElementById('discountUnit');
+    const applicableTo = document.getElementById('applicableTo');
+    const planSelection = document.getElementById('planSelection');
+
+    // Update discount unit based on type
+    discountType.addEventListener('change', function() {
+        switch(this.value) {
+            case 'Percentage':
+                discountUnit.textContent = '%';
+                break;
+            case 'Fixed':
+                discountUnit.textContent = '₱';
+                break;
+            case 'FreeTrial':
+                discountUnit.textContent = 'days';
+                break;
+            default:
+                discountUnit.textContent = '%';
+        }
+    });
+
+    // Show/hide plan selection
+    applicableTo.addEventListener('change', function() {
+        if (this.value === 'SpecificPlans') {
+            planSelection.style.display = 'block';
+        } else {
+            planSelection.style.display = 'none';
+            // Uncheck all plan checkboxes
+            const checkboxes = planSelection.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+    });
+
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const code = document.querySelector('input[name="Code"]').value.trim();
+        const name = document.querySelector('input[name="Name"]').value.trim();
+        const discountValue = document.querySelector('input[name="DiscountValue"]').value;
+        
+        if (!code || !name || !discountValue || !discountType.value) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+            return false;
+        }
+
+        // Validate discount code format
+        if (!/^[A-Z0-9_-]+$/i.test(code)) {
+            e.preventDefault();
+            alert('Discount code can only contain letters, numbers, hyphens, and underscores.');
+            return false;
+        }
+
+        // Validate discount value
+        const value = parseFloat(discountValue);
+        if (discountType.value === 'Percentage' && (value <= 0 || value > 100)) {
+            e.preventDefault();
+            alert('Percentage discount must be between 1 and 100.');
+            return false;
+        }
+
+        if ((discountType.value === 'Fixed' || discountType.value === 'FreeTrial') && value <= 0) {
+            e.preventDefault();
+            alert('Discount value must be greater than 0.');
+            return false;
+        }
+    });
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,179 @@
+@model List<BudgetMasterFinal.Controllers.DepartmentConsolidation>
+@{
+    ViewData["Title"] = "Department Comparison";
+    ViewData["PageTitle"] = "Department Comparison";
+    Layout = "_DashboardLayout";
+    int year = ViewBag.Year ?? DateTime.Now.Year;
+}
+
+<div class="dash-container">
+    <div class="page-actions" style="margin-bottom: 2rem;">
+        <a href="/Consolidation/Index?year=@year" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Consolidation
+        </a>
+        <form method="get" style="display: flex; align-items: center; gap: 0.5rem;">
+            <label style="font-weight: 500;">Fiscal Year:</label>
+            <select name="year" class="form-input-sm" onchange="this.form.submit()">
+                @for (int y = DateTime.Now.Year + 1; y >= DateTime.Now.Year - 3; y--)
+                {
+                    <option value="@y" selected="@(y == year)">@y</option>
+                }
+            </select>
+        </form>
+    </div>
+
+    <div class="dash-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-chart-bar"></i> Department Budget Comparison — FY @year
+            </div>
+        </div>
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <!-- Comparison Chart -->
+                <div style="margin-bottom: 3rem;">
+                    <canvas id="comparisonChart" style="max-height: 400px;"></canvas>
+                </div>
+
+                <!-- Detailed Comparison Table -->
+                <table class="dash-table">
+                    <thead>
+                        <tr>
+                            <th>Department</th>
+                            <th>Allocated</th>
+                            <th>Used %</th>
+                            <th>Spend %</th>
+                            <th>Variance</th>
+                            <th>Net Income</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var dept in Model)
+                        {
+                            var usagePct = dept.UsagePercentage;
+                            var spendPct = dept.SpendPercentage;
+                            <tr>
+                                <td><strong>@dept.Department.Name</strong></td>
+                                <td>₱@dept.TotalAllocated.ToString("N0")</td>
+                                <td>
+                                    <div class="progress-wrap">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width:@(Math.Min(usagePct, 100))%; background: #9333ea;"></div>
+                                        </div>
+                                        <span class="progress-pct">@usagePct.ToString("F0")%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="progress-wrap">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill @(spendPct > 100 ? "danger" : spendPct > 80 ? "warning" : "")" 
+                                                 style="width:@(Math.Min(spendPct, 100))%"></div>
+                                        </div>
+                                        <span class="progress-pct">@spendPct.ToString("F0")%</span>
+                                    </div>
+                                </td>
+                                <td class="@(dept.TotalVariance >= 0 ? "text-green" : "text-red") fw-bold">
+                                    @(dept.TotalVariance >= 0 ? "+" : "")₱@dept.TotalVariance.ToString("N0")
+                                </td>
+                                <td class="@(dept.NetIncome >= 0 ? "text-green" : "text-red") fw-bold">
+                                    @(dept.NetIncome >= 0 ? "+" : "")₱@dept.NetIncome.ToString("N0")
+                                </td>
+                                <td>
+                                    @if (spendPct <= 80)
+                                    {
+                                        <span class="status-badge status-active">Excellent</span>
+                                    }
+                                    else if (spendPct <= 95)
+                                    {
+                                        <span class="status-badge status-pending">Good</span>
+                                    }
+                                    else if (spendPct <= 100)
+                                    {
+                                        <span class="status-badge status-pending">Fair</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-rejected">Over Budget</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    <p>No department data available for comparison.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const departments = @Html.Raw(Json.Serialize(Model.Select(d => d.Department.Name)));
+    const allocated = @Html.Raw(Json.Serialize(Model.Select(d => d.TotalAllocated)));
+    const used = @Html.Raw(Json.Serialize(Model.Select(d => d.TotalUsed)));
+    const actualSpend = @Html.Raw(Json.Serialize(Model.Select(d => d.TotalActualSpend)));
+
+    const ctx = document.getElementById('comparisonChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: departments,
+            datasets: [
+                {
+                    label: 'Allocated',
+                    data: allocated,
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Used',
+                    data: used,
+                    backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                    borderColor: 'rgb(168, 85, 247)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Actual Spend',
+                    data: actualSpend,
+                    backgroundColor: 'rgba(251, 146, 60, 0.8)',
+                    borderColor: 'rgb(251, 146, 60)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Department Budget Comparison'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+}

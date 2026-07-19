@@ -1,0 +1,296 @@
+@model List<BudgetMasterFinal.Models.AuditLog>
+@{
+    ViewData["Title"] = "Activity Log";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+<div class="page-header">
+    <div class="page-header-content">
+        <div>
+            <h1 class="page-title">
+                <i class="fa-solid fa-list"></i> Activity Log
+            </h1>
+            <p class="page-subtitle">View your recent account activity and security events</p>
+        </div>
+        <div class="page-actions">
+            <a href="/AccountSettings/Index" class="btn-secondary">
+                <i class="fa-solid fa-arrow-left"></i> Back to Settings
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="activity-container">
+    <div class="activity-card">
+        @if (Model.Any())
+        {
+            <div class="activity-list">
+                @foreach (var log in Model)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon @GetActivityIconClass(log.Action)">
+                            <i class="fa-solid @GetActivityIcon(log.Action)"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-header">
+                                <h3 class="activity-title">@GetActivityTitle(log.Action)</h3>
+                                <span class="activity-time">@GetRelativeTime(log.Timestamp)</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(log.NewValues))
+                            {
+                                <p class="activity-details">@log.NewValues</p>
+                            }
+                            <div class="activity-meta">
+                                <span class="meta-item">
+                                    <i class="fa-solid fa-calendar"></i>
+                                    @log.Timestamp.ToString("MMM dd, yyyy hh:mm tt")
+                                </span>
+                                @if (!string.IsNullOrEmpty(log.IpAddress))
+                                {
+                                    <span class="meta-item">
+                                        <i class="fa-solid fa-location-dot"></i>
+                                        @log.IpAddress
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="fa-solid fa-inbox"></i>
+                <h3>No Activity Yet</h3>
+                <p>Your account activity will appear here</p>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    string GetActivityIcon(string action)
+    {
+        return action switch
+        {
+            "Login" => "fa-right-to-bracket",
+            "Logout" => "fa-right-from-bracket",
+            "PasswordChanged" => "fa-key",
+            "ProfileUpdated" => "fa-user-pen",
+            "SessionsTerminated" => "fa-ban",
+            _ => "fa-circle-info"
+        };
+    }
+
+    string GetActivityIconClass(string action)
+    {
+        return action switch
+        {
+            "Login" => "icon-success",
+            "Logout" => "icon-info",
+            "PasswordChanged" => "icon-warning",
+            "ProfileUpdated" => "icon-primary",
+            "SessionsTerminated" => "icon-danger",
+            _ => "icon-default"
+        };
+    }
+
+    string GetActivityTitle(string action)
+    {
+        return action switch
+        {
+            "Login" => "Logged In",
+            "Logout" => "Logged Out",
+            "PasswordChanged" => "Password Changed",
+            "ProfileUpdated" => "Profile Updated",
+            "SessionsTerminated" => "All Sessions Terminated",
+            _ => action
+        };
+    }
+
+    string GetRelativeTime(DateTime timestamp)
+    {
+        var timeSpan = DateTime.UtcNow - timestamp;
+        
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes} minutes ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours} hours ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays} days ago";
+        if (timeSpan.TotalDays < 30)
+            return $"{(int)(timeSpan.TotalDays / 7)} weeks ago";
+        
+        return timestamp.ToString("MMM dd, yyyy");
+    }
+}
+
+@section Styles {
+<style>
+.activity-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.activity-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.activity-list {
+    padding: 0;
+}
+
+.activity-item {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 0.2s;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item:hover {
+    background: #f9fafb;
+}
+
+.activity-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.activity-icon i {
+    font-size: 20px;
+}
+
+.icon-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.icon-info {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.icon-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.icon-primary {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.icon-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.icon-default {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.activity-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.activity-time {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.activity-details {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.activity-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.meta-item i {
+    font-size: 12px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 24px;
+}
+
+.empty-state i {
+    font-size: 64px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 14px;
+    color: #9ca3af;
+}
+
+@@media (max-width: 768px) {
+    .activity-item {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .activity-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}
+</style>
+}

@@ -1,0 +1,123 @@
+@model BudgetMasterFinal.Models.ViewModels.OrganizationProfileViewModel
+@{
+    ViewData["Title"] = "Company Profile";
+    ViewData["PageTitle"] = "Company Profile";
+}
+
+<div class="dash-container">
+    <div class="page-actions">
+        <a href="@Url.Action("EditProfile")" class="btn-primary">
+            <i class="fa-solid fa-edit"></i> Edit Profile
+        </a>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div>
+                <div class="kpi-label">Active Users</div>
+                <div class="kpi-value">@Model.UserCount</div>
+            </div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-sitemap"></i>
+            </div>
+            <div>
+                <div class="kpi-label">Departments</div>
+                <div class="kpi-value">@Model.DepartmentCount</div>
+            </div>
+        </div>
+        <div class="kpi-card teal">
+            <div class="kpi-icon">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <div>
+                <div class="kpi-label">Active Budgets</div>
+                <div class="kpi-value">@Model.BudgetCount</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dash-row">
+        <!-- Company Information Card -->
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-building"></i>
+                    Company Information
+                </div>
+            </div>
+            <div class="card-body">
+                <table class="dash-table">
+                    <tr>
+                        <td style="font-weight: 600; color: #64748b;">Company Name</td>
+                        <td>@Model.CompanyName</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #64748b;">Industry</td>
+                        <td>@(Model.Industry ?? "Not specified")</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #64748b;">Phone Number</td>
+                        <td>@(Model.Phone ?? "Not specified")</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #64748b;">Website</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(Model.Website))
+                            {
+                                <a href="@Model.Website" target="_blank" class="tbl-link">@Model.Website</a>
+                            }
+                            else
+                            {
+                                <span>Not specified</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #64748b;">Address</td>
+                        <td>@(Model.Address ?? "Not specified")</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #64748b;">Currency</td>
+                        <td>@Model.CurrencyCode</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: #64748b;">Status</td>
+                        <td>
+                            <span class="status-badge @(Model.IsActive ? "status-active" : "status-closed")">
+                                @(Model.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Subscription Information Card -->
+        <div class="dash-card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fa-solid fa-credit-card"></i>
+                    Subscription Information
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">
+                        @(Model.SubscriptionPlan ?? "No Active Plan")
+                    </div>
+                    <span class="status-badge status-active">Active</span>
+                    <div style="margin-top: 1rem; font-size: 0.875rem; color: #64748b;">
+                        Member Since: @Model.CreatedAt.ToString("MMMM dd, yyyy")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
