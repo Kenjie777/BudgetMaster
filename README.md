@@ -254,7 +254,7 @@ Password:
 
 # Developers
 
-Developed as an **IT15 Capstone Project** for the:
+Developed as an **IT15 Project** for the:
 
 **Bachelor of Science in Information Technology**
 
